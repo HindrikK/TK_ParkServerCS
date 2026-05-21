@@ -1,6 +1,6 @@
 ﻿namespace Eleon_SCADA.Forms
 {
-    partial class Form_IEC104Interface_Test
+    partial class Form_TSOInterfaceInterface_Test
     {
         /// <summary>
         /// Required designer variable.

@@ -24,7 +24,7 @@ namespace Eleon_SCADA.IEC104Server
 
         public IEC104Server()
         {
-            MaxNoOfClients = Settings.IEC104Server.MaxNoOfClients;
+            MaxNoOfClients = Settings.TSOInterface.MaxNoOfClients;
             Channels = new IEC104Channel[MaxNoOfClients];
         }
 
@@ -45,7 +45,7 @@ namespace Eleon_SCADA.IEC104Server
             ReconnectTimer = 0;
 
             myTcpListener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Parse(
-                Eleon_SCADA.Settings.IEC104Server.ServerIP), Eleon_SCADA.Settings.IEC104Server.Port);
+                Eleon_SCADA.Settings.TSOInterface.ServerIP), Eleon_SCADA.Settings.TSOInterface.Port);
             myTCPServerListenThread = new System.Threading.Thread(ListenForClients);
             myTCPServerListenThread.Name = "IEC104_Server_Listen";
             myTCPServerListenThread.IsBackground = true;
@@ -104,7 +104,7 @@ namespace Eleon_SCADA.IEC104Server
                                 ServerStatus = IEC104_ServerStatus.ERROR_STARTING;
                                 System.Threading.Thread.Sleep(2000);
 
-                                ReconnectTimer = Settings.IEC104Server.ReconnectTime;    // retry to start TCP listener when error occured
+                                ReconnectTimer = Settings.TSOInterface.ReconnectTime;    // retry to start TCP listener when error occured
                                 ServerStatus = IEC104_ServerStatus.WAITING_RESTART;
                                 //throw new Exception("Error starting IEC listener" + ex.Message);
                             }

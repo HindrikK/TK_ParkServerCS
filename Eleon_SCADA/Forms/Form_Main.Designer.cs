@@ -33,13 +33,14 @@
             this.label_BannerBackground = new System.Windows.Forms.Label();
             this.toolStripMenuItem_Application = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItem_ParkConnect = new System.Windows.Forms.ToolStripMenuItem();
-            this.IEC104ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.TSOLinkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.preferencesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem_File_Close = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItem_Settings = new System.Windows.Forms.ToolStripMenuItem();
             this.ParkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.turbinesControlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.iEC104ServerToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.TSOInterfaceToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.marketIfToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.alarmDispatchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.communicationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.vestasCOMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -54,7 +55,7 @@
             this.statusCodesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dataChartsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.productionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.iEC104InterfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.TSOInterfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItem_Control = new System.Windows.Forms.ToolStripMenuItem();
             this.startParkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,8 +66,9 @@
             this.StatusLabel_DatabaseStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabel_SetpointMode = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabel_PowerSetpoint = new System.Windows.Forms.ToolStripStatusLabel();
+            this.StatusLabel_Market = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.StatusLabel_IEC104 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.StatusLabel_TSOLink = new System.Windows.Forms.ToolStripStatusLabel();
             this.timer_Update_slow = new System.Windows.Forms.Timer(this.components);
             this.tabControl_Main = new System.Windows.Forms.TabControl();
             this.tabPage_T01 = new System.Windows.Forms.TabPage();
@@ -220,6 +222,7 @@
             this.label_UserLevel = new System.Windows.Forms.Label();
             this.button_AlarmAnnouncementEnable = new System.Windows.Forms.PictureBox();
             this.myToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.marketIfToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.tabControl_Main.SuspendLayout();
@@ -245,7 +248,7 @@
             // 
             this.toolStripMenuItem_Application.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ToolStripMenuItem_ParkConnect,
-            this.IEC104ToolStripMenuItem,
+            this.TSOLinkToolStripMenuItem,
             this.preferencesToolStripMenuItem,
             this.toolStripMenuItem_File_Close});
             this.toolStripMenuItem_Application.Name = "toolStripMenuItem_Application";
@@ -255,28 +258,28 @@
             // ToolStripMenuItem_ParkConnect
             // 
             this.ToolStripMenuItem_ParkConnect.Name = "ToolStripMenuItem_ParkConnect";
-            this.ToolStripMenuItem_ParkConnect.Size = new System.Drawing.Size(187, 22);
+            this.ToolStripMenuItem_ParkConnect.Size = new System.Drawing.Size(164, 22);
             this.ToolStripMenuItem_ParkConnect.Text = "Connect turbine";
             this.ToolStripMenuItem_ParkConnect.Click += new System.EventHandler(this.connectParkToolStripMenuItem_Click);
             // 
-            // IEC104ToolStripMenuItem
+            // TSOLinkToolStripMenuItem
             // 
-            this.IEC104ToolStripMenuItem.Name = "IEC104ToolStripMenuItem";
-            this.IEC104ToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
-            this.IEC104ToolStripMenuItem.Text = "Start IEC-104 server";
-            this.IEC104ToolStripMenuItem.Click += new System.EventHandler(this.IEC104ToolStripMenuItem_Click);
+            this.TSOLinkToolStripMenuItem.Name = "TSOLinkToolStripMenuItem";
+            this.TSOLinkToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.TSOLinkToolStripMenuItem.Text = "Start TSO link";
+            this.TSOLinkToolStripMenuItem.Click += new System.EventHandler(this.IEC104ToolStripMenuItem_Click);
             // 
             // preferencesToolStripMenuItem
             // 
             this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
-            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.preferencesToolStripMenuItem.Text = "Preferences...";
             this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.preferencesToolStripMenuItem_Click);
             // 
             // toolStripMenuItem_File_Close
             // 
             this.toolStripMenuItem_File_Close.Name = "toolStripMenuItem_File_Close";
-            this.toolStripMenuItem_File_Close.Size = new System.Drawing.Size(187, 22);
+            this.toolStripMenuItem_File_Close.Size = new System.Drawing.Size(164, 22);
             this.toolStripMenuItem_File_Close.Text = "Close";
             this.toolStripMenuItem_File_Close.Click += new System.EventHandler(this.toolStripMenuItem_File_Close_Click);
             // 
@@ -285,7 +288,8 @@
             this.ToolStripMenuItem_Settings.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ParkToolStripMenuItem,
             this.turbinesControlToolStripMenuItem,
-            this.iEC104ServerToolStripMenuItem1,
+            this.TSOInterfaceToolStripMenuItem1,
+            this.marketIfToolStripMenuItem1,
             this.alarmDispatchToolStripMenuItem,
             this.communicationToolStripMenuItem,
             this.databaseToolStripMenuItem});
@@ -307,12 +311,19 @@
             this.turbinesControlToolStripMenuItem.Text = "Turbines";
             this.turbinesControlToolStripMenuItem.Click += new System.EventHandler(this.powerControlToolStripMenuItem_Click);
             // 
-            // iEC104ServerToolStripMenuItem1
+            // TSOInterfaceToolStripMenuItem1
             // 
-            this.iEC104ServerToolStripMenuItem1.Name = "iEC104ServerToolStripMenuItem1";
-            this.iEC104ServerToolStripMenuItem1.Size = new System.Drawing.Size(194, 22);
-            this.iEC104ServerToolStripMenuItem1.Text = "IEC-104 Interface";
-            this.iEC104ServerToolStripMenuItem1.Click += new System.EventHandler(this.iEC104ServerToolStripMenuItem1_Click);
+            this.TSOInterfaceToolStripMenuItem1.Name = "TSOInterfaceToolStripMenuItem1";
+            this.TSOInterfaceToolStripMenuItem1.Size = new System.Drawing.Size(194, 22);
+            this.TSOInterfaceToolStripMenuItem1.Text = "TSO Interface";
+            this.TSOInterfaceToolStripMenuItem1.Click += new System.EventHandler(this.iEC104ServerToolStripMenuItem1_Click);
+            // 
+            // marketIfToolStripMenuItem1
+            // 
+            this.marketIfToolStripMenuItem1.Name = "marketIfToolStripMenuItem1";
+            this.marketIfToolStripMenuItem1.Size = new System.Drawing.Size(194, 22);
+            this.marketIfToolStripMenuItem1.Text = "Market Interface";
+            this.marketIfToolStripMenuItem1.Click += new System.EventHandler(this.marketIfToolStripMenuItem_Click);
             // 
             // alarmDispatchToolStripMenuItem
             // 
@@ -394,7 +405,8 @@
             // 
             this.toolStripMenuItem_Tools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.dataLogsToolStripMenuItem,
-            this.iEC104InterfaceToolStripMenuItem,
+            this.TSOInterfaceToolStripMenuItem,
+            this.marketIfToolStripMenuItem,
             this.debugToolStripMenuItem});
             this.toolStripMenuItem_Tools.Name = "toolStripMenuItem_Tools";
             this.toolStripMenuItem_Tools.Size = new System.Drawing.Size(47, 20);
@@ -407,7 +419,7 @@
             this.dataChartsToolStripMenuItem,
             this.productionToolStripMenuItem});
             this.dataLogsToolStripMenuItem.Name = "dataLogsToolStripMenuItem";
-            this.dataLogsToolStripMenuItem.Size = new System.Drawing.Size(172, 22);
+            this.dataLogsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.dataLogsToolStripMenuItem.Text = "Logs";
             // 
             // statusCodesToolStripMenuItem
@@ -431,17 +443,17 @@
             this.productionToolStripMenuItem.Text = "Production";
             this.productionToolStripMenuItem.Click += new System.EventHandler(this.productionToolStripMenuItem_Click);
             // 
-            // iEC104InterfaceToolStripMenuItem
+            // TSOInterfaceToolStripMenuItem
             // 
-            this.iEC104InterfaceToolStripMenuItem.Name = "iEC104InterfaceToolStripMenuItem";
-            this.iEC104InterfaceToolStripMenuItem.Size = new System.Drawing.Size(172, 22);
-            this.iEC104InterfaceToolStripMenuItem.Text = "IEC-104 Interface";
-            this.iEC104InterfaceToolStripMenuItem.Click += new System.EventHandler(this.iEC104InterfaceToolStripMenuItem_Click);
+            this.TSOInterfaceToolStripMenuItem.Name = "TSOInterfaceToolStripMenuItem";
+            this.TSOInterfaceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.TSOInterfaceToolStripMenuItem.Text = "TSO Interface";
+            this.TSOInterfaceToolStripMenuItem.Click += new System.EventHandler(this.iEC104InterfaceToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            this.debugToolStripMenuItem.Size = new System.Drawing.Size(172, 22);
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.debugToolStripMenuItem.Text = "Developer";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
@@ -483,8 +495,9 @@
             this.StatusLabel_DatabaseStatus,
             this.StatusLabel_SetpointMode,
             this.StatusLabel_PowerSetpoint,
+            this.StatusLabel_Market,
             this.toolStripStatusLabel2,
-            this.StatusLabel_IEC104});
+            this.StatusLabel_TSOLink});
             this.statusStrip1.Location = new System.Drawing.Point(0, 473);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(824, 25);
@@ -504,7 +517,7 @@
             this.StatusLabel_ParkConnection.Margin = new System.Windows.Forms.Padding(10, 3, 0, 2);
             this.StatusLabel_ParkConnection.Name = "StatusLabel_ParkConnection";
             this.StatusLabel_ParkConnection.Padding = new System.Windows.Forms.Padding(0, 0, 20, 0);
-            this.StatusLabel_ParkConnection.Size = new System.Drawing.Size(130, 20);
+            this.StatusLabel_ParkConnection.Size = new System.Drawing.Size(110, 20);
             this.StatusLabel_ParkConnection.Text = "Disconnected";
             this.StatusLabel_ParkConnection.Click += new System.EventHandler(this.StatusLabel_ParkConnection_Click);
             // 
@@ -517,7 +530,7 @@
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
             this.StatusLabel_DatabaseStatus.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.StatusLabel_DatabaseStatus.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.StatusLabel_DatabaseStatus.Margin = new System.Windows.Forms.Padding(35, 3, 0, 2);
+            this.StatusLabel_DatabaseStatus.Margin = new System.Windows.Forms.Padding(20, 3, 0, 2);
             this.StatusLabel_DatabaseStatus.Name = "StatusLabel_DatabaseStatus";
             this.StatusLabel_DatabaseStatus.Padding = new System.Windows.Forms.Padding(0, 0, 20, 0);
             this.StatusLabel_DatabaseStatus.Size = new System.Drawing.Size(120, 20);
@@ -532,10 +545,10 @@
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
             this.StatusLabel_SetpointMode.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.StatusLabel_SetpointMode.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.StatusLabel_SetpointMode.Margin = new System.Windows.Forms.Padding(35, 3, 0, 2);
+            this.StatusLabel_SetpointMode.Margin = new System.Windows.Forms.Padding(20, 3, 0, 2);
             this.StatusLabel_SetpointMode.Name = "StatusLabel_SetpointMode";
-            this.StatusLabel_SetpointMode.Size = new System.Drawing.Size(120, 20);
-            this.StatusLabel_SetpointMode.Text = "Remote setpoint";
+            this.StatusLabel_SetpointMode.Size = new System.Drawing.Size(110, 20);
+            this.StatusLabel_SetpointMode.Text = "Automatic setpoint";
             // 
             // StatusLabel_PowerSetpoint
             // 
@@ -547,29 +560,43 @@
             this.StatusLabel_PowerSetpoint.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.StatusLabel_PowerSetpoint.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.StatusLabel_PowerSetpoint.Name = "StatusLabel_PowerSetpoint";
-            this.StatusLabel_PowerSetpoint.Size = new System.Drawing.Size(110, 20);
+            this.StatusLabel_PowerSetpoint.Size = new System.Drawing.Size(100, 20);
             this.StatusLabel_PowerSetpoint.Text = "2000 / 2000 kW";
+            // 
+            // StatusLabel_Market
+            // 
+            this.StatusLabel_Market.AutoSize = false;
+            this.StatusLabel_Market.BackColor = System.Drawing.Color.LightGray;
+            this.StatusLabel_Market.BorderSides = ((System.Windows.Forms.ToolStripStatusLabelBorderSides)((((System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top) 
+            | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right) 
+            | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
+            this.StatusLabel_Market.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.StatusLabel_Market.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.StatusLabel_Market.Margin = new System.Windows.Forms.Padding(20, 3, 0, 2);
+            this.StatusLabel_Market.Name = "StatusLabel_Market";
+            this.StatusLabel_Market.Size = new System.Drawing.Size(130, 20);
+            this.StatusLabel_Market.Text = "Market Ctrl Off";
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(69, 20);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(9, 20);
             this.toolStripStatusLabel2.Spring = true;
             // 
-            // StatusLabel_IEC104
+            // StatusLabel_TSOLink
             // 
-            this.StatusLabel_IEC104.AutoSize = false;
-            this.StatusLabel_IEC104.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.StatusLabel_IEC104.BorderSides = ((System.Windows.Forms.ToolStripStatusLabelBorderSides)((((System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top) 
+            this.StatusLabel_TSOLink.AutoSize = false;
+            this.StatusLabel_TSOLink.BackColor = System.Drawing.Color.LightGray;
+            this.StatusLabel_TSOLink.BorderSides = ((System.Windows.Forms.ToolStripStatusLabelBorderSides)((((System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top) 
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right) 
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
-            this.StatusLabel_IEC104.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.StatusLabel_IEC104.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.StatusLabel_IEC104.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.StatusLabel_IEC104.Name = "StatusLabel_IEC104";
-            this.StatusLabel_IEC104.Padding = new System.Windows.Forms.Padding(0, 0, 20, 0);
-            this.StatusLabel_IEC104.Size = new System.Drawing.Size(180, 20);
-            this.StatusLabel_IEC104.Text = "IEC-104 server stopped";
+            this.StatusLabel_TSOLink.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.StatusLabel_TSOLink.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.StatusLabel_TSOLink.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.StatusLabel_TSOLink.Name = "StatusLabel_TSOLink";
+            this.StatusLabel_TSOLink.Padding = new System.Windows.Forms.Padding(0, 0, 20, 0);
+            this.StatusLabel_TSOLink.Size = new System.Drawing.Size(160, 20);
+            this.StatusLabel_TSOLink.Text = "IEC-104 server stopped";
             // 
             // timer_Update_slow
             // 
@@ -665,14 +692,16 @@
             // 
             // label_CommStatus_01
             // 
+            this.label_CommStatus_01.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label_CommStatus_01.BackColor = System.Drawing.Color.Red;
             this.label_CommStatus_01.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label_CommStatus_01.ForeColor = System.Drawing.Color.White;
-            this.label_CommStatus_01.Location = new System.Drawing.Point(573, 0);
+            this.label_CommStatus_01.Location = new System.Drawing.Point(0, 0);
             this.label_CommStatus_01.Name = "label_CommStatus_01";
-            this.label_CommStatus_01.Size = new System.Drawing.Size(219, 23);
+            this.label_CommStatus_01.Size = new System.Drawing.Size(792, 23);
             this.label_CommStatus_01.TabIndex = 180;
-            this.label_CommStatus_01.Text = "No communication to turbine";
+            this.label_CommStatus_01.Text = "No communication";
             this.label_CommStatus_01.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // label_RemoteControl
@@ -857,7 +886,7 @@
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label7.Location = new System.Drawing.Point(211, 126);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(32, 16);
+            this.label7.Size = new System.Drawing.Size(31, 16);
             this.label7.TabIndex = 137;
             this.label7.Text = "deg";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -912,7 +941,7 @@
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label5.Location = new System.Drawing.Point(211, 95);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(31, 16);
+            this.label5.Size = new System.Drawing.Size(30, 16);
             this.label5.TabIndex = 131;
             this.label5.Text = "rpm";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -923,7 +952,7 @@
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label4.Location = new System.Drawing.Point(211, 157);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(30, 16);
+            this.label4.Size = new System.Drawing.Size(29, 16);
             this.label4.TabIndex = 130;
             this.label4.Text = "m/s";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -934,7 +963,7 @@
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label3.Location = new System.Drawing.Point(211, 65);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(28, 16);
+            this.label3.Size = new System.Drawing.Size(27, 16);
             this.label3.TabIndex = 129;
             this.label3.Text = "kW";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1081,7 +1110,7 @@
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label2.Location = new System.Drawing.Point(724, 259);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(36, 16);
+            this.label2.Size = new System.Drawing.Size(35, 16);
             this.label2.TabIndex = 198;
             this.label2.Text = "kVar";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1114,7 +1143,7 @@
             this.label50.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label50.Location = new System.Drawing.Point(724, 227);
             this.label50.Name = "label50";
-            this.label50.Size = new System.Drawing.Size(28, 16);
+            this.label50.Size = new System.Drawing.Size(27, 16);
             this.label50.TabIndex = 195;
             this.label50.Text = "kW";
             this.label50.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1147,7 +1176,7 @@
             this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label18.Location = new System.Drawing.Point(724, 196);
             this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(28, 16);
+            this.label18.Size = new System.Drawing.Size(27, 16);
             this.label18.TabIndex = 192;
             this.label18.Text = "kW";
             this.label18.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1180,7 +1209,7 @@
             this.label76.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label76.Location = new System.Drawing.Point(724, 70);
             this.label76.Name = "label76";
-            this.label76.Size = new System.Drawing.Size(35, 16);
+            this.label76.Size = new System.Drawing.Size(34, 16);
             this.label76.TabIndex = 158;
             this.label76.Text = "kWh";
             this.label76.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1213,7 +1242,7 @@
             this.label40.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label40.Location = new System.Drawing.Point(406, 258);
             this.label40.Name = "label40";
-            this.label40.Size = new System.Drawing.Size(17, 16);
+            this.label40.Size = new System.Drawing.Size(16, 16);
             this.label40.TabIndex = 155;
             this.label40.Text = "A";
             this.label40.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1246,7 +1275,7 @@
             this.label43.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label43.Location = new System.Drawing.Point(406, 227);
             this.label43.Name = "label43";
-            this.label43.Size = new System.Drawing.Size(17, 16);
+            this.label43.Size = new System.Drawing.Size(16, 16);
             this.label43.TabIndex = 152;
             this.label43.Text = "A";
             this.label43.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1279,7 +1308,7 @@
             this.label46.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label46.Location = new System.Drawing.Point(406, 196);
             this.label46.Name = "label46";
-            this.label46.Size = new System.Drawing.Size(17, 16);
+            this.label46.Size = new System.Drawing.Size(16, 16);
             this.label46.TabIndex = 149;
             this.label46.Text = "A";
             this.label46.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1312,7 +1341,7 @@
             this.label37.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label37.Location = new System.Drawing.Point(197, 258);
             this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(17, 16);
+            this.label37.Size = new System.Drawing.Size(16, 16);
             this.label37.TabIndex = 146;
             this.label37.Text = "V";
             this.label37.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1345,7 +1374,7 @@
             this.label32.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label32.Location = new System.Drawing.Point(197, 227);
             this.label32.Name = "label32";
-            this.label32.Size = new System.Drawing.Size(17, 16);
+            this.label32.Size = new System.Drawing.Size(16, 16);
             this.label32.TabIndex = 143;
             this.label32.Text = "V";
             this.label32.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1378,7 +1407,7 @@
             this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label26.Location = new System.Drawing.Point(197, 196);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(17, 16);
+            this.label26.Size = new System.Drawing.Size(16, 16);
             this.label26.TabIndex = 140;
             this.label26.Text = "V";
             this.label26.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1411,7 +1440,7 @@
             this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label16.Location = new System.Drawing.Point(197, 133);
             this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(24, 16);
+            this.label16.Size = new System.Drawing.Size(23, 16);
             this.label16.TabIndex = 137;
             this.label16.Text = "Hz";
             this.label16.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1466,7 +1495,7 @@
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label9.Location = new System.Drawing.Point(197, 71);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(28, 16);
+            this.label9.Size = new System.Drawing.Size(27, 16);
             this.label9.TabIndex = 132;
             this.label9.Text = "kW";
             this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1557,7 +1586,7 @@
             this.label79.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label79.Location = new System.Drawing.Point(230, 245);
             this.label79.Name = "label79";
-            this.label79.Size = new System.Drawing.Size(21, 16);
+            this.label79.Size = new System.Drawing.Size(20, 16);
             this.label79.TabIndex = 183;
             this.label79.Text = "°C";
             this.label79.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1590,7 +1619,7 @@
             this.label82.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label82.Location = new System.Drawing.Point(230, 121);
             this.label82.Name = "label82";
-            this.label82.Size = new System.Drawing.Size(21, 16);
+            this.label82.Size = new System.Drawing.Size(20, 16);
             this.label82.TabIndex = 180;
             this.label82.Text = "°C";
             this.label82.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1623,7 +1652,7 @@
             this.label85.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label85.Location = new System.Drawing.Point(758, 153);
             this.label85.Name = "label85";
-            this.label85.Size = new System.Drawing.Size(21, 16);
+            this.label85.Size = new System.Drawing.Size(20, 16);
             this.label85.TabIndex = 177;
             this.label85.Text = "°C";
             this.label85.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1656,7 +1685,7 @@
             this.label88.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label88.Location = new System.Drawing.Point(758, 122);
             this.label88.Name = "label88";
-            this.label88.Size = new System.Drawing.Size(21, 16);
+            this.label88.Size = new System.Drawing.Size(20, 16);
             this.label88.TabIndex = 174;
             this.label88.Text = "°C";
             this.label88.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1689,7 +1718,7 @@
             this.label91.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label91.Location = new System.Drawing.Point(758, 91);
             this.label91.Name = "label91";
-            this.label91.Size = new System.Drawing.Size(21, 16);
+            this.label91.Size = new System.Drawing.Size(20, 16);
             this.label91.TabIndex = 171;
             this.label91.Text = "°C";
             this.label91.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1722,7 +1751,7 @@
             this.label61.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label61.Location = new System.Drawing.Point(476, 152);
             this.label61.Name = "label61";
-            this.label61.Size = new System.Drawing.Size(21, 16);
+            this.label61.Size = new System.Drawing.Size(20, 16);
             this.label61.TabIndex = 165;
             this.label61.Text = "°C";
             this.label61.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1755,7 +1784,7 @@
             this.label64.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label64.Location = new System.Drawing.Point(476, 245);
             this.label64.Name = "label64";
-            this.label64.Size = new System.Drawing.Size(21, 16);
+            this.label64.Size = new System.Drawing.Size(20, 16);
             this.label64.TabIndex = 162;
             this.label64.Text = "°C";
             this.label64.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1788,7 +1817,7 @@
             this.label67.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label67.Location = new System.Drawing.Point(476, 214);
             this.label67.Name = "label67";
-            this.label67.Size = new System.Drawing.Size(21, 16);
+            this.label67.Size = new System.Drawing.Size(20, 16);
             this.label67.TabIndex = 159;
             this.label67.Text = "°C";
             this.label67.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1821,7 +1850,7 @@
             this.label70.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label70.Location = new System.Drawing.Point(476, 121);
             this.label70.Name = "label70";
-            this.label70.Size = new System.Drawing.Size(21, 16);
+            this.label70.Size = new System.Drawing.Size(20, 16);
             this.label70.TabIndex = 156;
             this.label70.Text = "°C";
             this.label70.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1854,7 +1883,7 @@
             this.label73.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label73.Location = new System.Drawing.Point(476, 183);
             this.label73.Name = "label73";
-            this.label73.Size = new System.Drawing.Size(21, 16);
+            this.label73.Size = new System.Drawing.Size(20, 16);
             this.label73.TabIndex = 153;
             this.label73.Text = "°C";
             this.label73.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1887,7 +1916,7 @@
             this.label55.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label55.Location = new System.Drawing.Point(230, 183);
             this.label55.Name = "label55";
-            this.label55.Size = new System.Drawing.Size(21, 16);
+            this.label55.Size = new System.Drawing.Size(20, 16);
             this.label55.TabIndex = 150;
             this.label55.Text = "°C";
             this.label55.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1920,7 +1949,7 @@
             this.label52.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label52.Location = new System.Drawing.Point(758, 214);
             this.label52.Name = "label52";
-            this.label52.Size = new System.Drawing.Size(21, 16);
+            this.label52.Size = new System.Drawing.Size(20, 16);
             this.label52.TabIndex = 147;
             this.label52.Text = "°C";
             this.label52.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1953,7 +1982,7 @@
             this.label49.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label49.Location = new System.Drawing.Point(230, 90);
             this.label49.Name = "label49";
-            this.label49.Size = new System.Drawing.Size(21, 16);
+            this.label49.Size = new System.Drawing.Size(20, 16);
             this.label49.TabIndex = 144;
             this.label49.Text = "°C";
             this.label49.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1986,7 +2015,7 @@
             this.label41.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label41.Location = new System.Drawing.Point(230, 152);
             this.label41.Name = "label41";
-            this.label41.Size = new System.Drawing.Size(21, 16);
+            this.label41.Size = new System.Drawing.Size(20, 16);
             this.label41.TabIndex = 141;
             this.label41.Text = "°C";
             this.label41.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2019,7 +2048,7 @@
             this.label28.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label28.Location = new System.Drawing.Point(476, 90);
             this.label28.Name = "label28";
-            this.label28.Size = new System.Drawing.Size(21, 16);
+            this.label28.Size = new System.Drawing.Size(20, 16);
             this.label28.TabIndex = 138;
             this.label28.Text = "°C";
             this.label28.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2052,7 +2081,7 @@
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label12.Location = new System.Drawing.Point(230, 214);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(21, 16);
+            this.label12.Size = new System.Drawing.Size(20, 16);
             this.label12.TabIndex = 135;
             this.label12.Text = "°C";
             this.label12.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2132,7 +2161,7 @@
             this.label21.AutoSize = true;
             this.label21.Location = new System.Drawing.Point(72, 54);
             this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(139, 16);
+            this.label21.Size = new System.Drawing.Size(138, 16);
             this.label21.TabIndex = 136;
             this.label21.Text = "Active Power setpoint:";
             // 
@@ -2152,7 +2181,7 @@
             this.label33.AutoSize = true;
             this.label33.Location = new System.Drawing.Point(339, 84);
             this.label33.Name = "label33";
-            this.label33.Size = new System.Drawing.Size(36, 16);
+            this.label33.Size = new System.Drawing.Size(35, 16);
             this.label33.TabIndex = 142;
             this.label33.Text = "kVar";
             // 
@@ -2202,7 +2231,7 @@
             this.label19.AutoSize = true;
             this.label19.Location = new System.Drawing.Point(339, 54);
             this.label19.Name = "label19";
-            this.label19.Size = new System.Drawing.Size(28, 16);
+            this.label19.Size = new System.Drawing.Size(27, 16);
             this.label19.TabIndex = 138;
             this.label19.Text = "kW";
             // 
@@ -2211,7 +2240,7 @@
             this.label35.AutoSize = true;
             this.label35.Location = new System.Drawing.Point(55, 84);
             this.label35.Name = "label35";
-            this.label35.Size = new System.Drawing.Size(156, 16);
+            this.label35.Size = new System.Drawing.Size(155, 16);
             this.label35.TabIndex = 140;
             this.label35.Text = "Reactive Power setpoint:";
             // 
@@ -2280,7 +2309,7 @@
             this.label29.ForeColor = System.Drawing.Color.White;
             this.label29.Location = new System.Drawing.Point(150, 37);
             this.label29.Name = "label29";
-            this.label29.Size = new System.Drawing.Size(28, 16);
+            this.label29.Size = new System.Drawing.Size(27, 16);
             this.label29.TabIndex = 151;
             this.label29.Text = "kW";
             this.label29.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2293,7 +2322,7 @@
             this.label23.ForeColor = System.Drawing.Color.White;
             this.label23.Location = new System.Drawing.Point(249, 37);
             this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(30, 16);
+            this.label23.Size = new System.Drawing.Size(29, 16);
             this.label23.TabIndex = 153;
             this.label23.Text = "m/s";
             this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2306,7 +2335,7 @@
             this.label6.ForeColor = System.Drawing.Color.White;
             this.label6.Location = new System.Drawing.Point(771, 38);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(35, 16);
+            this.label6.Size = new System.Drawing.Size(34, 16);
             this.label6.TabIndex = 161;
             this.label6.Text = "kWh";
             this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2363,6 +2392,13 @@
             this.button_AlarmAnnouncementEnable.TabIndex = 187;
             this.button_AlarmAnnouncementEnable.TabStop = false;
             this.button_AlarmAnnouncementEnable.Click += new System.EventHandler(this.button_AlarmAnnouncementEnable_Click);
+            // 
+            // marketIfToolStripMenuItem
+            // 
+            this.marketIfToolStripMenuItem.Name = "marketIfToolStripMenuItem";
+            this.marketIfToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.marketIfToolStripMenuItem.Text = "Market Interface";
+            this.marketIfToolStripMenuItem.Click += new System.EventHandler(this.marketIfToolStripMenuItem_Click_1);
             // 
             // Form_Main
             // 
@@ -2425,13 +2461,13 @@
         private System.Windows.Forms.Timer timer_Update_fast;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel StatusLabel_DatabaseStatus;
-        private System.Windows.Forms.ToolStripStatusLabel StatusLabel_IEC104;
+        private System.Windows.Forms.ToolStripStatusLabel StatusLabel_TSOLink;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItem_Control;
         private System.Windows.Forms.ToolStripMenuItem startParkToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stopParkToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel StatusLabel_PowerSetpoint;
-        private System.Windows.Forms.ToolStripMenuItem IEC104ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem TSOLinkToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel StatusLabel_SetpointMode;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem_Tools;
         private System.Windows.Forms.ToolStripMenuItem databaseToolStripMenuItem;
@@ -2443,9 +2479,10 @@
         private System.Windows.Forms.ToolStripMenuItem dataLogsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem statusCodesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem dataChartsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem marketIfToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem productionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ParkToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem iEC104ServerToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem TSOInterfaceToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem alarmDispatchToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem turbinesControlToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem communicationToolStripMenuItem;
@@ -2453,7 +2490,7 @@
         private System.Windows.Forms.ToolStripMenuItem addInterfaceToolStripMenuItem;
         private System.Windows.Forms.TabControl tabControl_Main;
         private System.Windows.Forms.TabPage tabPage_T01;
-        private System.Windows.Forms.ToolStripMenuItem iEC104InterfaceToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem TSOInterfaceToolStripMenuItem;
         private System.Windows.Forms.Label label_ParkActivePower;
         private System.Windows.Forms.Label label_ParkWindSpeed;
         private System.Windows.Forms.Label label29;
@@ -2605,7 +2642,8 @@
         private System.Windows.Forms.ToolStripMenuItem licenseToolStripMenuItem;
         private System.Windows.Forms.PictureBox button_AlarmAnnouncementEnable;
         private System.Windows.Forms.ToolTip myToolTip;
-
+        private System.Windows.Forms.ToolStripStatusLabel StatusLabel_Market;
+        private System.Windows.Forms.ToolStripMenuItem marketIfToolStripMenuItem;
     }
 }
 

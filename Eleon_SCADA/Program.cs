@@ -5,9 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Configuration;
-using Modbus.Device;
-using Modbus.Data;
-using Modbus.Utility;
 using System.Net.Sockets;
 using System.Net;
 
@@ -22,6 +19,7 @@ namespace Eleon_SCADA
         public static Logging.Databases myDatabases;
         public static IEC104Server.IEC104Server myIEC104Server;
         public static IEC104_Interface.IEC104_Interface myIEC104_Interface;
+        public static ModbusIntegration myModbusServer;
         public static InteropServices myInteropServices;
         public static PowerCurve PowerCurve_V80;
 
@@ -43,10 +41,6 @@ namespace Eleon_SCADA
                     Forms.Form_Startup myForm = new Forms.Form_Startup();
                     myForm.Show();
 
-                    //Thread ModbusSlaveThread = new Thread(new ThreadStart(CreatePark));
-                    //ModbusSlaveThread.IsBackground = true;
-                    //ModbusSlaveThread.Start();
-
                     Application.ApplicationExit += myApplicationExit;
                     System.Timers.Timer NoLicenseTimer;
                     
@@ -63,6 +57,7 @@ namespace Eleon_SCADA
                     try
                     {
                         Settings.Settings.Load();
+                        MarketInterfaceLog.Load();
                         PowerCurve_V80 = new PowerCurve("PowerCurve_V80.txt");
                     }
                     catch (Exception ex)
@@ -72,10 +67,27 @@ namespace Eleon_SCADA
                     myPark = new Park.WindPark();
                     myPark.AddTurbines(1, "Vestas V80");
                     myVestasController = new Park.VestasController(myPark, myPark.myTurbines);
+                    if (!Eleon_SCADA.Settings.MarketInterface.MarketIfEnable)
+                    {
+                        myPark.Market_ActivePowerSetpoint = myPark.ActivePowerMax;
+                    }
                     myAlarmDispatch = new Alarm_Dispatch(myPark);
                     myAlarmDispatch.Start();
                     myIEC104Server = new IEC104Server.IEC104Server();
                     myIEC104_Interface = new IEC104_Interface.IEC104_Interface();
+                    if (Eleon_SCADA.Settings.MarketInterface.MarketIfEnable)
+                    {
+                        try
+                        {
+                            myModbusServer = new ModbusIntegration();
+                            myModbusServer.Start();
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Error starting Market Interface server\n" + ex.Message, "Error");
+                            myModbusServer = null;
+                        }
+                    }
                     myInteropServices = new InteropServices();
 
 
@@ -146,6 +158,16 @@ namespace Eleon_SCADA
 
         private static void myApplicationExit(object sender, EventArgs e)
         {
+            try
+            {
+                if (myModbusServer != null)
+                {
+                    myModbusServer.Stop();
+                }
+                MarketInterfaceLog.Stop();
+            }
+            catch { }
+
             try
             {
                 myInteropServices.Dispose();

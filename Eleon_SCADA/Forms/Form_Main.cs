@@ -14,6 +14,7 @@ namespace Eleon_SCADA.Forms
     public partial class Form_Main : Form
     {
         public bool ClosingConfirmation = true;     // if closing confirmation TRUE then ask confirmation each time before closing form
+        private DateTime marketInterfaceDownSince = DateTime.MinValue;
         const string USER_ADMIN = "admin";
         const string PSWD_ADMIN = "admin8811";
         const string USER_SERVICE = "service";
@@ -124,14 +125,12 @@ namespace Eleon_SCADA.Forms
                 if (Program.myPark.myTurbines[1].CommunicationStatus)
                 {
                     tabControl_Main.TabPages[0].BackColor = Color.SteelBlue;
-                    label_CommStatus_01.Text = "Turbine communication OK";
-                    label_CommStatus_01.BackColor = Color.Green;
+                    label_CommStatus_01.Visible = false;
                 }
                 else
                 {
                     tabControl_Main.TabPages[0].BackColor = Color.Red;
-                    label_CommStatus_01.Text = "No communication to turbine";
-                    label_CommStatus_01.BackColor = Color.Red;
+                    label_CommStatus_01.Visible = true;
                 }
 
                 label_StateTxt.Text = Program.myPark.myTurbines[1].State_Txt;
@@ -155,8 +154,11 @@ namespace Eleon_SCADA.Forms
 
                 if (Program.myPark.ActivePowerSetpoint_Mode == 0)
                 {
-                    StatusLabel_SetpointMode.Text = "No setpoint";
-                    StatusLabel_PowerSetpoint.Text = Program.myPark.ActivePowerMax + " kW";
+                    StatusLabel_SetpointMode.Text = "Automatic setpoint";
+                    StatusLabel_PowerSetpoint.Text = Math.Min(Program.myPark.ActivePowerMax,
+                        Math.Min(Program.myPark.Local_ActivePowerSetpoint,
+                        Math.Min(Program.myPark.TSO_ActivePowerSetpoint, Program.myPark.Market_ActivePowerSetpoint))) + " / "
+                        + Program.myPark.ActivePowerMax + " kW";
                 }
                 else if (Program.myPark.ActivePowerSetpoint_Mode == 1)
                 {
@@ -166,8 +168,14 @@ namespace Eleon_SCADA.Forms
                 }
                 else if (Program.myPark.ActivePowerSetpoint_Mode == 2)
                 {
-                    StatusLabel_SetpointMode.Text = "Remote setpoint";
-                    StatusLabel_PowerSetpoint.Text = Program.myPark.Remote_ActivePowerSetpoint + " / "
+                    StatusLabel_SetpointMode.Text = "TSO setpoint";
+                    StatusLabel_PowerSetpoint.Text = Program.myPark.TSO_ActivePowerSetpoint + " / "
+                        + Program.myPark.ActivePowerMax + " kW";
+                }
+                else if (Program.myPark.ActivePowerSetpoint_Mode == 3)
+                {
+                    StatusLabel_SetpointMode.Text = "Market setpoint";
+                    StatusLabel_PowerSetpoint.Text = Program.myPark.Market_ActivePowerSetpoint + " / "
                         + Program.myPark.ActivePowerMax + " kW";
                 }
 
@@ -198,7 +206,8 @@ namespace Eleon_SCADA.Forms
 
                 // Bottom status bar
                 UpdateParkCommStatus();
-                UpdateIEC104ServerStatus();
+                UpdateTSOLinkStatus();
+                UpdateMarketInterfaceStatus();
                 Update_DatabaseStatus();
 
                 // Alarm announcement function switching
@@ -277,7 +286,7 @@ namespace Eleon_SCADA.Forms
         {
             if (Program.myIEC104Server.ServerStatus == IEC104Server.IEC104_ServerStatus.RUNNING)
             {
-                DialogResult answer = MessageBox.Show("Are you sure you want to stop\nthe IEC-104 server ?", "Confirm",
+                DialogResult answer = MessageBox.Show("Are you sure you want to stop\nthe TSO link ?", "Confirm",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (answer == DialogResult.Yes)
                 {
@@ -304,7 +313,7 @@ namespace Eleon_SCADA.Forms
                     return;
                 }
             }
-            UpdateIEC104ServerStatus();
+            UpdateTSOLinkStatus();
         }
 
         private void preferencesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -391,8 +400,14 @@ namespace Eleon_SCADA.Forms
 
         private void iEC104InterfaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Form_IEC104Interface form_IEC104Server = new Form_IEC104Interface();
+            Form_TSOInterface form_IEC104Server = new Form_TSOInterface();
             form_IEC104Server.Show(this);
+        }
+
+        private void marketIfToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form_MarketInterfaceSettings form_MarketInterface = new Form_MarketInterfaceSettings();
+            form_MarketInterface.ShowDialog(this);
         }
 
         private void StatusLabel_ParkConnection_Click(object sender, EventArgs e)
@@ -465,52 +480,123 @@ namespace Eleon_SCADA.Forms
             }
         }
 
-        public void UpdateIEC104ServerStatus()
+        public void UpdateTSOLinkStatus()
         {
             switch (Program.myIEC104Server.ServerStatus)
             {
                 case IEC104Server.IEC104_ServerStatus.STOPPED:
-                    StatusLabel_IEC104.Text = "IEC104 server stopped";
-                    StatusLabel_IEC104.BackColor = Color.LightSteelBlue;
-                    StatusLabel_IEC104.ForeColor = Color.Black;
-                    IEC104ToolStripMenuItem.Text = "Start IEC-104 server";
+                    StatusLabel_TSOLink.Text = "TSO link stopped";
+                    StatusLabel_TSOLink.BackColor = Color.LightGray;
+                    StatusLabel_TSOLink.ForeColor = Color.Black;
+                    TSOLinkToolStripMenuItem.Text = "Start TSO link";
                     break;
 
                 case IEC104Server.IEC104_ServerStatus.STARTING:
-                    StatusLabel_IEC104.Text = "IEC104 server starting...";
-                    StatusLabel_IEC104.BackColor = Color.Yellow;
-                    StatusLabel_IEC104.ForeColor = Color.Black;
-                    IEC104ToolStripMenuItem.Text = "Stop IEC-104 server";
+                    StatusLabel_TSOLink.Text = "TSO link start...";
+                    StatusLabel_TSOLink.BackColor = Color.Yellow;
+                    StatusLabel_TSOLink.ForeColor = Color.Black;
+                    TSOLinkToolStripMenuItem.Text = "Stop TSO link";
                     break;
 
                 case IEC104Server.IEC104_ServerStatus.ERROR_STARTING:
-                    StatusLabel_IEC104.Text = "IEC104 starting error";
-                    StatusLabel_IEC104.BackColor = Color.Red;
-                    StatusLabel_IEC104.ForeColor = Color.Black;
-                    IEC104ToolStripMenuItem.Text = "Stop IEC-104 server";
+                    StatusLabel_TSOLink.Text = "TSO link error";
+                    StatusLabel_TSOLink.BackColor = Color.Red;
+                    StatusLabel_TSOLink.ForeColor = Color.Black;
+                    TSOLinkToolStripMenuItem.Text = "Stop TSO link";
                     break;
 
                 case IEC104Server.IEC104_ServerStatus.WAITING_RESTART:
-                    StatusLabel_IEC104.Text = "IEC104 reconn. in: " + Program.myIEC104Server.ReconnectTimer.ToString() + " s";
-                    StatusLabel_IEC104.BackColor = Color.Yellow;
-                    StatusLabel_IEC104.ForeColor = Color.Black;
-                    IEC104ToolStripMenuItem.Text = "Stop IEC-104 server";
+                    StatusLabel_TSOLink.Text = "TSO reconn. in: " + Program.myIEC104Server.ReconnectTimer.ToString() + " s";
+                    StatusLabel_TSOLink.BackColor = Color.Yellow;
+                    StatusLabel_TSOLink.ForeColor = Color.Black;
+                    TSOLinkToolStripMenuItem.Text = "Stop TSO link";
                     break;
 
                 case IEC104Server.IEC104_ServerStatus.RUNNING:
-                    StatusLabel_IEC104.Text = "IEC104 server running (" + Program.myIEC104Server.NoOfClients.ToString() + " clients)";
-                    StatusLabel_IEC104.BackColor = Color.Green;
-                    StatusLabel_IEC104.ForeColor = Color.White;
-                    IEC104ToolStripMenuItem.Text = "Stop IEC-104 server";
+                    if (Program.myIEC104Server.NoOfClients > 0)
+                    {
+                        StatusLabel_TSOLink.Text = "TSO link OK (" + Program.myIEC104Server.NoOfClients.ToString() + " clients)";
+                        StatusLabel_TSOLink.BackColor = Color.Green;
+                        StatusLabel_TSOLink.ForeColor = Color.White;
+                    }
+                    else
+                    {
+                        StatusLabel_TSOLink.Text = "TSO link down";
+                        StatusLabel_TSOLink.BackColor = Color.Yellow;
+                        StatusLabel_TSOLink.ForeColor = Color.Black;
+                    }
+                    TSOLinkToolStripMenuItem.Text = "Stop TSO link";
                     break;
 
                 default:
-                    StatusLabel_IEC104.Text = "IEC104 unknown status";
-                    StatusLabel_IEC104.BackColor = Color.Yellow;
-                    StatusLabel_IEC104.ForeColor = Color.Black;
-                    IEC104ToolStripMenuItem.Text = "Start IEC-104 server";
+                    StatusLabel_TSOLink.Text = "TSO link NA";
+                    StatusLabel_TSOLink.BackColor = Color.Yellow;
+                    StatusLabel_TSOLink.ForeColor = Color.Black;
+                    TSOLinkToolStripMenuItem.Text = "Start TSO link";
                     break;
             }
+        }
+
+        public void UpdateMarketInterfaceStatus()
+        {
+            if (!Eleon_SCADA.Settings.MarketInterface.MarketIfEnable)
+            {
+                marketInterfaceDownSince = DateTime.MinValue;
+                ApplyMarketInterfaceFallback();
+
+                StatusLabel_Market.Text = "Market Ctrl Off";
+                StatusLabel_Market.BackColor = Color.LightGray;
+                StatusLabel_Market.ForeColor = Color.Black;
+                return;
+            }
+
+            int activeConnections = 0;
+            if (Program.myModbusServer != null)
+            {
+                try
+                {
+                    activeConnections = Program.myModbusServer.GetActiveConnections().Count;
+                }
+                catch
+                {
+                    activeConnections = 0;
+                }
+            }
+
+            if (activeConnections > 0)
+            {
+                marketInterfaceDownSince = DateTime.MinValue;
+
+                StatusLabel_Market.Text = "Market Ctrl OK";
+                StatusLabel_Market.BackColor = Color.Green;
+                StatusLabel_Market.ForeColor = Color.White;
+            }
+            else
+            {
+                if (marketInterfaceDownSince == DateTime.MinValue)
+                {
+                    marketInterfaceDownSince = DateTime.Now;
+                }
+
+                if ((DateTime.Now - marketInterfaceDownSince).TotalSeconds >= Eleon_SCADA.Settings.MarketInterface.FallbackTimeout)
+                {
+                    ApplyMarketInterfaceFallback();
+                }
+
+                StatusLabel_Market.Text = "Market Ctrl Down";
+                StatusLabel_Market.BackColor = Color.Yellow;
+                StatusLabel_Market.ForeColor = Color.Black;
+            }
+        }
+
+        private void ApplyMarketInterfaceFallback()
+        {
+            if (Program.myPark == null)
+            {
+                return;
+            }
+
+            Program.myPark.Market_ActivePowerSetpoint = Program.myPark.ActivePowerMax;
         }
 
         public void Update_StatusLabel_Power(int _power)
@@ -801,6 +887,12 @@ namespace Eleon_SCADA.Forms
                 DialogResult result = MessageBox.Show("Are you sure you want to close application ?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (result != DialogResult.Yes) { e.Cancel = true; }
             }
+        }
+
+        private void marketIfToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            Form_MarketInterface form_MarketInterface = new Form_MarketInterface();
+            form_MarketInterface.ShowDialog(this);
         }
     }
 }

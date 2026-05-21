@@ -69,10 +69,6 @@
     <StartupObject>Eleon_SCADA.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Modbus, Version=1.11.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Libraries\Modbus.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -107,11 +103,11 @@
     <Compile Include="Forms\Form_FrequencyController.Designer.cs">
       <DependentUpon>Form_FrequencyController.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\Form_IEC104Interface_Test.cs">
+    <Compile Include="Forms\Form_TSOInterfaceInterface_Test.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Form_IEC104Interface_Test.Designer.cs">
-      <DependentUpon>Form_IEC104Interface_Test.cs</DependentUpon>
+    <Compile Include="Forms\Form_TSOInterfaceInterface_Test.Designer.cs">
+      <DependentUpon>Form_TSOInterfaceInterface_Test.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\Form_Startup.cs">
       <SubType>Form</SubType>
@@ -137,9 +133,16 @@
     <Compile Include="Forms\Settings\Form_AutoResetErrors.Designer.cs">
       <DependentUpon>Form_AutoResetErrors.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Form_MarketInterface.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Form_MarketInterface.Designer.cs">
+      <DependentUpon>Form_MarketInterface.cs</DependentUpon>
+    </Compile>
     <Compile Include="Licensing.cs" />
     <Compile Include="MiscFunctions.cs" />
-    <Compile Include="External_Interface\ModbusTCPSlave.cs" />
+    <Compile Include="External_Interface\MarketInterfaceLog.cs" />
+    <Compile Include="External_Interface\ModbusIntegration.cs" />
     <Compile Include="External_Interface\VirtualTurbine.cs" />
     <Compile Include="External_Interface\IEC104_Interface.cs" />
     <Compile Include="Forms\Form_DataCharts.cs">
@@ -208,11 +211,29 @@
     <Compile Include="Forms\Settings\Form_DatabaseSettings.Designer.cs">
       <DependentUpon>Form_DatabaseSettings.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\Form_IEC104Interface.cs">
+    <Compile Include="Forms\Form_TSOInterface.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Form_IEC104Interface.Designer.cs">
-      <DependentUpon>Form_IEC104Interface.cs</DependentUpon>
+    <Compile Include="Forms\Form_TSOInterface.Designer.cs">
+      <DependentUpon>Form_TSOInterface.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Settings\Form_MarketInterfaceSettings.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Settings\Form_MarketInterfaceSettings.Designer.cs">
+      <DependentUpon>Form_MarketInterfaceSettings.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Form_MarketInterfaceLogs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Form_MarketInterfaceLogs.Designer.cs">
+      <DependentUpon>Form_MarketInterfaceLogs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Form_ModbusStatus.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Form_ModbusStatus.Designer.cs">
+      <DependentUpon>Form_ModbusStatus.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\Settings\Form_IEC104Settings.cs">
       <SubType>Form</SubType>
@@ -301,11 +322,20 @@
     <EmbeddedResource Include="Forms\Form_FrequencyController.resx">
       <DependentUpon>Form_FrequencyController.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\Form_IEC104Interface_Test.resx">
-      <DependentUpon>Form_IEC104Interface_Test.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\Form_MarketInterfaceLogs.resx">
+      <DependentUpon>Form_MarketInterfaceLogs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Form_TSOInterfaceInterface_Test.resx">
+      <DependentUpon>Form_TSOInterfaceInterface_Test.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Form_IEC104_Logs.resx">
       <DependentUpon>Form_IEC104_Logs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Form_MarketInterface.resx">
+      <DependentUpon>Form_MarketInterface.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Settings\Form_MarketInterfaceSettings.resx">
+      <DependentUpon>Form_MarketInterfaceSettings.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Form_Production.resx">
       <DependentUpon>Form_Production.cs</DependentUpon>
@@ -346,8 +376,8 @@
     <EmbeddedResource Include="Forms\Settings\Form_DatabaseSettings.resx">
       <DependentUpon>Form_DatabaseSettings.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\Form_IEC104Interface.resx">
-      <DependentUpon>Form_IEC104Interface.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\Form_TSOInterface.resx">
+      <DependentUpon>Form_TSOInterface.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Settings\Form_IEC104Settings.resx">
       <DependentUpon>Form_IEC104Settings.cs</DependentUpon>
@@ -396,6 +426,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="turbine.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\submodules\TQ_ModbusServerCS\ModbusServerCS.csproj">
+      <Project>{667273AC-CDDD-3596-E5E2-CA3EE4F7725B}</Project>
+      <Name>ModbusServerCS</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,6 +1,6 @@
 ﻿namespace Eleon_SCADA.Forms
 {
-    partial class Form_IEC104Interface
+    partial class Form_TSOInterface
     {
         /// <summary>
         /// Required designer variable.
@@ -815,7 +815,7 @@
             this.button_ServiceFunctions.UseVisualStyleBackColor = true;
             this.button_ServiceFunctions.Click += new System.EventHandler(this.button_ServiceFunctions_Click);
             // 
-            // Form_IEC104Interface
+            // Form_TSOInterface
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -826,9 +826,9 @@
             this.Controls.Add(this.listBox_Clients);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-            this.Name = "Form_IEC104Interface";
+            this.Name = "Form_TSOInterface";
             this.ShowIcon = false;
-            this.Text = "IEC-104 Interface";
+            this.Text = "TSO Interface (IEC-104)";
             this.groupBox1.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();

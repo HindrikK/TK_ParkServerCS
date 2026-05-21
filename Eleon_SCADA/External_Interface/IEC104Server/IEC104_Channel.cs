@@ -49,9 +49,9 @@ namespace Eleon_SCADA.IEC104Server
         /// <param name="_channelID">ID used for this IEC-104 client/channel in system</param>
         public IEC104Channel(IEC104Server _myIEC104Server, IEC104_Database _myIECDatabase, System.Net.Sockets.TcpClient _myTCPClient, int _channelID)
         {
-            ASDU = Convert.ToByte(Eleon_SCADA.Settings.IEC104Server.ASDU);
-            periodicTransmission = Eleon_SCADA.Settings.IEC104Server.periodicTransmission;
-            periodicPeriod = Eleon_SCADA.Settings.IEC104Server.periodicPeriod;
+            ASDU = Convert.ToByte(Eleon_SCADA.Settings.TSOInterface.ASDU);
+            periodicTransmission = Eleon_SCADA.Settings.TSOInterface.periodicTransmission;
+            periodicPeriod = Eleon_SCADA.Settings.TSOInterface.periodicPeriod;
             channelID = _channelID;
 
             myTCPClient = _myTCPClient;

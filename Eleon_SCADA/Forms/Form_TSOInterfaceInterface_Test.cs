@@ -9,9 +9,9 @@ using System.Windows.Forms;
 
 namespace Eleon_SCADA.Forms
 {
-    public partial class Form_IEC104Interface_Test : Form
+    public partial class Form_TSOInterfaceInterface_Test : Form
     {
-        public Form_IEC104Interface_Test()
+        public Form_TSOInterfaceInterface_Test()
         {
             InitializeComponent();
         }

@@ -49,18 +49,16 @@ namespace Eleon_SCADA.Park
                     activePowerMax = value;
 
                     // if setpoints are higher than new max power
-                    if (local_ActivePowerSetpoint > activePowerMax)
-                    {
-                        local_ActivePowerSetpoint = activePowerMax;
-                    }
-                    if (remote_ActivePowerSetpoint > activePowerMax)
-                    {
-                        remote_ActivePowerSetpoint = activePowerMax;
-                    }
-                    if (ActivePowerSetpoint > activePowerMax)
-                    {
-                        ActivePowerSetpoint = activePowerMax;
-                    }
+                    local_ActivePowerSetpoint = ClampActivePowerSetpoint(local_ActivePowerSetpoint);
+                    tso_ActivePowerSetpoint = ClampActivePowerSetpoint(tso_ActivePowerSetpoint);
+                    market_ActivePowerSetpoint = ClampActivePowerSetpoint(market_ActivePowerSetpoint);
+                    ApplyActivePowerSetpointMode();
+
+                    Eleon_SCADA.Settings.Park.ParkMaxPower = (ushort)activePowerMax;
+                    Eleon_SCADA.Settings.Park.Local_ActivePowerSetpoint = (ushort)local_ActivePowerSetpoint;
+                    Eleon_SCADA.Settings.Park.TSO_ActivePowerSetpoint = (ushort)tso_ActivePowerSetpoint;
+                    Eleon_SCADA.Settings.Park.Market_ActivePowerSetpoint = (ushort)market_ActivePowerSetpoint;
+                    Eleon_SCADA.Settings.Park.Save();
                 }
             }
         }
@@ -72,14 +70,7 @@ namespace Eleon_SCADA.Park
             {
                 if (value != activePowerSetpoint) //if value changed
                 {
-                    if (value > ActivePowerMax)
-                    {
-                        activePowerSetpoint = ActivePowerMax;
-                    }
-                    else
-                    {
-                        activePowerSetpoint = value;
-                    }
+                    activePowerSetpoint = ClampActivePowerSetpoint(value);
                     SetActivePower();
                 }
             }
@@ -92,52 +83,47 @@ namespace Eleon_SCADA.Park
             {
                 if (value != local_ActivePowerSetpoint) //if value changed
                 {
-                    if (value > ActivePowerMax)
-                    {
-                        local_ActivePowerSetpoint = ActivePowerMax;
-                    }
-                    else
-                    {
-                        local_ActivePowerSetpoint = value;
-                    }
-
-                    if (ActivePowerSetpoint_Mode == 1)
-                    {
-                        ActivePowerSetpoint = local_ActivePowerSetpoint;
-                    }
+                    local_ActivePowerSetpoint = ClampActivePowerSetpoint(value);
+                    ApplyActivePowerSetpointMode();
 
                     Eleon_SCADA.Settings.Park.Local_ActivePowerSetpoint = (ushort)local_ActivePowerSetpoint;
                     Eleon_SCADA.Settings.Park.Save();
                 }
             }
         }
-        private int remote_ActivePowerSetpoint;
-        public int Remote_ActivePowerSetpoint
+        private int tso_ActivePowerSetpoint;
+        public int TSO_ActivePowerSetpoint
         {
-            get { return remote_ActivePowerSetpoint; }
+            get { return tso_ActivePowerSetpoint; }
             set
             {
-                if (value != remote_ActivePowerSetpoint) //if value changed
+                if (value != tso_ActivePowerSetpoint) //if value changed
                 {
-                    if (value > ActivePowerMax)
-                    {
-                        remote_ActivePowerSetpoint = ActivePowerMax;
-                    }
-                    else
-                    {
-                        remote_ActivePowerSetpoint = value;
-                    }
+                    tso_ActivePowerSetpoint = ClampActivePowerSetpoint(value);
+                    ApplyActivePowerSetpointMode();
 
-                    if (ActivePowerSetpoint_Mode == 2)
-                    {
-                        ActivePowerSetpoint = remote_ActivePowerSetpoint;
-                    }
-
-                    Eleon_SCADA.Settings.Park.Remote_ActivePowerSetpoint = (ushort)remote_ActivePowerSetpoint;
+                    Eleon_SCADA.Settings.Park.TSO_ActivePowerSetpoint = (ushort)tso_ActivePowerSetpoint;
                     Eleon_SCADA.Settings.Park.Save();
                 }
             }
         }
+        private int market_ActivePowerSetpoint;
+        public int Market_ActivePowerSetpoint
+        {
+            get { return market_ActivePowerSetpoint; }
+            set
+            {
+                if (value != market_ActivePowerSetpoint) //if value changed
+                {
+                    market_ActivePowerSetpoint = ClampActivePowerSetpoint(value);
+                    ApplyActivePowerSetpointMode();
+
+                    Eleon_SCADA.Settings.Park.Market_ActivePowerSetpoint = (ushort)market_ActivePowerSetpoint;
+                    Eleon_SCADA.Settings.Park.Save();
+                }
+            }
+        }
+
         private int activePowerSetpoint_Mode;
         public int ActivePowerSetpoint_Mode
         {
@@ -146,23 +132,13 @@ namespace Eleon_SCADA.Park
             {
                 if (value != activePowerSetpoint_Mode)   //if value has changed
                 {
-                    if (value == 0)
+                    if (value < 0 || value > 3)
                     {
-                        ActivePowerSetpoint = ActivePowerMax;
-                        SetActivePower();
-                    }
-                    else if (value == 1)
-                    {
-                        ActivePowerSetpoint = Local_ActivePowerSetpoint;
-                        SetActivePower();
-                    }
-                    else if (value == 2)
-                    {
-                        ActivePowerSetpoint = Remote_ActivePowerSetpoint;
-                        SetActivePower();
+                        throw new Exception("Invalid active power setpoint mode");
                     }
 
                     activePowerSetpoint_Mode = value;
+                    ApplyActivePowerSetpointMode();
 
                     Eleon_SCADA.Settings.Park.ActivePowerSetpoint_Mode = activePowerSetpoint_Mode;
                     Eleon_SCADA.Settings.Park.Save();
@@ -190,7 +166,8 @@ namespace Eleon_SCADA.Park
         public WindPark()
         {
             this.local_ActivePowerSetpoint = Eleon_SCADA.Settings.Park.Local_ActivePowerSetpoint;
-            this.remote_ActivePowerSetpoint = Eleon_SCADA.Settings.Park.Remote_ActivePowerSetpoint;
+            this.tso_ActivePowerSetpoint = Eleon_SCADA.Settings.Park.TSO_ActivePowerSetpoint;
+            this.market_ActivePowerSetpoint = Eleon_SCADA.Settings.Park.Market_ActivePowerSetpoint;
             this.activePowerMax = Eleon_SCADA.Settings.Park.ParkMaxPower;
             this.activePowerSetpoint_Mode = Eleon_SCADA.Settings.Park.ActivePowerSetpoint_Mode;
 
@@ -198,6 +175,8 @@ namespace Eleon_SCADA.Park
             myUpdateTimer = new System.Timers.Timer(100);
             myUpdateTimer.Elapsed += new System.Timers.ElapsedEventHandler(myUpdateTimer_Elapsed);
             myUpdateTimer.Start();
+
+            ApplyActivePowerSetpointMode();
         }
 
         void myUpdateTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -229,11 +208,62 @@ namespace Eleon_SCADA.Park
 
         #region CONTROL_FUNCTIONS
 
+        private int ClampActivePowerSetpoint(int value)
+        {
+            if (value < 0)
+            {
+                return 0;
+            }
+
+            if (value > ActivePowerMax)
+            {
+                return ActivePowerMax;
+            }
+
+            return value;
+        }
+
+        private int GetAutomaticActivePowerSetpoint()
+        {
+            return Math.Min(ActivePowerMax,
+                Math.Min(Local_ActivePowerSetpoint,
+                    Math.Min(TSO_ActivePowerSetpoint, Market_ActivePowerSetpoint)));
+        }
+
+        private void ApplyActivePowerSetpointMode()
+        {
+            if (ActivePowerSetpoint_Mode == 0)
+            {
+                ActivePowerSetpoint = GetAutomaticActivePowerSetpoint();
+            }
+            else if (ActivePowerSetpoint_Mode == 1)
+            {
+                ActivePowerSetpoint = Local_ActivePowerSetpoint;
+            }
+            else if (ActivePowerSetpoint_Mode == 2)
+            {
+                ActivePowerSetpoint = TSO_ActivePowerSetpoint;
+            }
+            else if (ActivePowerSetpoint_Mode == 3)
+            {
+                ActivePowerSetpoint = Market_ActivePowerSetpoint;
+            }
+        }
+
         // calculate and send active power setpoints to all turbines in park to control park's total active power output
         public void SetActivePower()
         {
             try
             {
+                if (Program.myPark == null ||
+                    Program.myVestasController == null ||
+                    Program.myPark.myTurbines == null ||
+                    Program.myPark.myTurbines.Length <= 1 ||
+                    Program.myPark.myTurbines[1] == null)
+                {
+                    return;
+                }
+
                 // set T01 power
                 Program.myPark.myTurbines[1].Set_PowerSetpoint((short)activePowerSetpoint);
             }

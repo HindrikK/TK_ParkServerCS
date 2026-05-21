@@ -70,7 +70,7 @@
             this.textBox_ServerIP.Name = "textBox_ServerIP";
             this.textBox_ServerIP.Size = new System.Drawing.Size(91, 20);
             this.textBox_ServerIP.TabIndex = 3;
-            this.textBox_ServerIP.Text = "127.0.0.1";
+            this.textBox_ServerIP.Text = "0.0.0.0";
             this.textBox_ServerIP.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // label2

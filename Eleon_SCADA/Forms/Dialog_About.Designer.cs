@@ -36,12 +36,13 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(117, 170);
+            this.label1.Location = new System.Drawing.Point(121, 45);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(45, 13);
             this.label1.TabIndex = 0;
@@ -50,7 +51,7 @@
             // label_Version
             // 
             this.label_Version.AutoSize = true;
-            this.label_Version.Location = new System.Drawing.Point(162, 170);
+            this.label_Version.Location = new System.Drawing.Point(166, 45);
             this.label_Version.Name = "label_Version";
             this.label_Version.Size = new System.Drawing.Size(40, 13);
             this.label_Version.TabIndex = 1;
@@ -58,15 +59,17 @@
             // 
             // label4
             // 
+            this.label4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(140, 216);
+            this.label4.Location = new System.Drawing.Point(137, 217);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(61, 13);
+            this.label4.Size = new System.Drawing.Size(70, 13);
             this.label4.TabIndex = 3;
-            this.label4.Text = "Eleon 2016";
+            this.label4.Text = "Troonik 2026";
             // 
             // label5
             // 
+            this.label5.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.label5.Location = new System.Drawing.Point(101, 9);
@@ -79,7 +82,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
-            this.label2.Location = new System.Drawing.Point(35, 62);
+            this.label2.Location = new System.Drawing.Point(43, 79);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(66, 15);
             this.label2.TabIndex = 6;
@@ -89,7 +92,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
-            this.label6.Location = new System.Drawing.Point(91, 101);
+            this.label6.Location = new System.Drawing.Point(99, 118);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(133, 15);
             this.label6.TabIndex = 7;
@@ -99,7 +102,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
-            this.label7.Location = new System.Drawing.Point(91, 84);
+            this.label7.Location = new System.Drawing.Point(99, 101);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(135, 15);
             this.label7.TabIndex = 8;
@@ -109,11 +112,21 @@
             // 
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
-            this.label9.Location = new System.Drawing.Point(91, 116);
+            this.label9.Location = new System.Drawing.Point(99, 135);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(103, 15);
             this.label9.TabIndex = 10;
             this.label9.Text = "*Alarm mail client";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
+            this.label3.Location = new System.Drawing.Point(99, 152);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(141, 15);
+            this.label3.TabIndex = 11;
+            this.label3.Text = "*Energy market interface";
             // 
             // Dialog_About
             // 
@@ -121,6 +134,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LightSkyBlue;
             this.ClientSize = new System.Drawing.Size(341, 238);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
@@ -150,5 +164,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label3;
     }
 }

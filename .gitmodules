@@ -1,0 +1,3 @@
+[submodule "submodules/TQ_ModbusServerCS"]
+	path = submodules/TQ_ModbusServerCS
+	url = git@github-HindrikK:HindrikK/TQ_ModbusServerCS.git

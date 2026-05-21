@@ -228,6 +228,8 @@ namespace Eleon_SCADA.Park
                 Poll1_Timer.Start();
                 Poll2_Timer.Start();
                 Poll10s_Timer.Start();
+
+                _Park.SetActivePower();
             }
             catch (Exception ex)
             {
@@ -878,6 +880,7 @@ namespace Eleon_SCADA.Park
             Send_Command(_turbineID, 'N');
         }
 
+        // PARAMETER 12.30 "Enable Remote Pwr Ctrl" MUST BE 0 for this command to work
         public void Set_ActivePowerSetpoint(int _turbineID, short setpoint)
         {
             lock (Program.myVestasController)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -128,7 +128,7 @@ namespace Eleon_SCADA.IEC104_Interface
         {
             // initialize variables
             this.ParkMVBreaker_Mon = true;
-            this.ActivePowerSetpoint_Ctrl = Eleon_SCADA.Settings.Park.Remote_ActivePowerSetpoint / 100;
+            this.ActivePowerSetpoint_Ctrl = Eleon_SCADA.Settings.Park.TSO_ActivePowerSetpoint / 100;
             this.ActivePowerSetpoint_Mon = ActivePowerSetpoint_Ctrl;
             Program.myIEC104Server.myIECDatabase.Set(6201, (short)this.ActivePowerSetpoint_Ctrl);
 
@@ -151,7 +151,7 @@ namespace Eleon_SCADA.IEC104_Interface
                 ActivePowerSetpoint_Mon = (short)e.NewValue;
                 if (SecondaryRegulation_Mon)
                 {
-                    Program.myPark.Remote_ActivePowerSetpoint = ActivePowerSetpoint_Mon * 100;
+                    Program.myPark.TSO_ActivePowerSetpoint = ActivePowerSetpoint_Mon * 100;
                 }
             }
         }
@@ -205,18 +205,18 @@ namespace Eleon_SCADA.IEC104_Interface
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(3, false);
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(4, false);
 
-                            Program.myPark.Remote_ActivePowerSetpoint = (int)(0.8 * Program.myPark.ActivePowerMax);
+                            Program.myPark.TSO_ActivePowerSetpoint = (int)(0.8 * Program.myPark.ActivePowerMax);
                         }
                         else    // deactivate
                         {
                             EmLimit80_Mon = false;
                             if (SecondaryRegulation_Ctrl)    // if secondary regulation is activated
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
                             }
                             else    // if secondary regulation is not active
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
                             }
                         }
                     }
@@ -242,18 +242,18 @@ namespace Eleon_SCADA.IEC104_Interface
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(3, false);
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(4, false);
 
-                            Program.myPark.Remote_ActivePowerSetpoint = (int)(0.6 * Program.myPark.ActivePowerMax);
+                            Program.myPark.TSO_ActivePowerSetpoint = (int)(0.6 * Program.myPark.ActivePowerMax);
                         }
                         else    // deactivate
                         {
                             EmLimit60_Mon = false;
                             if (SecondaryRegulation_Ctrl)    // if secondary regulation is activated
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
                             }
                             else    // if secondary regulation is not active
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
                             }
                         }
                     }
@@ -279,18 +279,18 @@ namespace Eleon_SCADA.IEC104_Interface
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(2, false);
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(4, false);
 
-                            Program.myPark.Remote_ActivePowerSetpoint = (int)(0.4 * Program.myPark.ActivePowerMax);
+                            Program.myPark.TSO_ActivePowerSetpoint = (int)(0.4 * Program.myPark.ActivePowerMax);
                         }
                         else    // deactivate
                         {
                             EmLimit40_Mon = false;
                             if (SecondaryRegulation_Ctrl)    // if secondary regulation is activated
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
                             }
                             else    // if secondary regulation is not active
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
                             }
                         }
                     }
@@ -316,18 +316,18 @@ namespace Eleon_SCADA.IEC104_Interface
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(2, false);
                             Program.myIEC104Server.myIECDatabase.C_SC_NA_data.Set(3, false);
 
-                            Program.myPark.Remote_ActivePowerSetpoint = (int)(0.2 * Program.myPark.ActivePowerMax);
+                            Program.myPark.TSO_ActivePowerSetpoint = (int)(0.2 * Program.myPark.ActivePowerMax);
                         }
                         else    // deactivate
                         {
                             EmLimit20_Mon = false;
                             if (SecondaryRegulation_Ctrl)    // if secondary regulation is activated
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
                             }
                             else    // if secondary regulation is not active
                             {
-                                Program.myPark.Remote_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
+                                Program.myPark.TSO_ActivePowerSetpoint = (int)Program.myPark.ActivePowerMax;
                             }
                         }
                     }
@@ -343,12 +343,12 @@ namespace Eleon_SCADA.IEC104_Interface
                     {
                         if ((bool)e.NewValue)
                         {
-                            Program.myPark.Remote_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
+                            Program.myPark.TSO_ActivePowerSetpoint = (int)(ActivePowerSetpoint_Ctrl * 100);
                             SecondaryRegulation_Mon = true;
                         }
                         else
                         {
-                            Program.myPark.Remote_ActivePowerSetpoint = Program.myPark.ActivePowerMax;
+                            Program.myPark.TSO_ActivePowerSetpoint = Program.myPark.ActivePowerMax;
                             SecondaryRegulation_Mon = false;
                         }
                     }

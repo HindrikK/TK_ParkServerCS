@@ -22,20 +22,23 @@ namespace Eleon_SCADA.Forms
             textBox_LocalPowerSetpoint.Text = Program.myPark.Local_ActivePowerSetpoint.ToString();
             textBox_ParkMaxPower.Text = Program.myPark.ActivePowerMax.ToString();
             comboBox_PowerControlMode.SelectedIndex = Program.myPark.ActivePowerSetpoint_Mode;
-            textBox_RemoteSetpoint.Text = Program.myPark.Remote_ActivePowerSetpoint.ToString();
+            textBox_RemoteSetpoint.Text = Program.myPark.TSO_ActivePowerSetpoint.ToString();
+            textBox_MarketSetpoint.Text = Program.myPark.Market_ActivePowerSetpoint.ToString();
         }
 
         private void button_OK_Click(object sender, EventArgs e)
         {
             ushort LocalActivePowerSetpoint;
-            ushort RemoteActivePowerSetpoint;
+            ushort TSOActivePowerSetpoint;
+            ushort MarketActivePowerSetpoint;
             ushort ActivePowerMax;
             int SetPoint_Mode;
 
             try
             {
                 LocalActivePowerSetpoint = Convert.ToUInt16(textBox_LocalPowerSetpoint.Text);
-                RemoteActivePowerSetpoint = Convert.ToUInt16(textBox_RemoteSetpoint.Text);
+                TSOActivePowerSetpoint = Convert.ToUInt16(textBox_RemoteSetpoint.Text);
+                MarketActivePowerSetpoint = Convert.ToUInt16(textBox_MarketSetpoint.Text);
                 ActivePowerMax = Convert.ToUInt16(textBox_ParkMaxPower.Text);
                 SetPoint_Mode = comboBox_PowerControlMode.SelectedIndex;
             }
@@ -48,7 +51,8 @@ namespace Eleon_SCADA.Forms
             try
             {
                 Program.myPark.Local_ActivePowerSetpoint = Convert.ToUInt16(textBox_LocalPowerSetpoint.Text);
-                Program.myPark.Remote_ActivePowerSetpoint = Convert.ToUInt16(textBox_RemoteSetpoint.Text);
+                Program.myPark.TSO_ActivePowerSetpoint = Convert.ToUInt16(textBox_RemoteSetpoint.Text);
+                Program.myPark.Market_ActivePowerSetpoint = Convert.ToUInt16(textBox_MarketSetpoint.Text);
                 Program.myPark.ActivePowerMax = Convert.ToUInt16(textBox_ParkMaxPower.Text);
                 Program.myPark.ActivePowerSetpoint_Mode = comboBox_PowerControlMode.SelectedIndex;
 
@@ -68,7 +72,8 @@ namespace Eleon_SCADA.Forms
             try
             {
                 Eleon_SCADA.Settings.Park.Local_ActivePowerSetpoint = LocalActivePowerSetpoint;
-                Eleon_SCADA.Settings.Park.Remote_ActivePowerSetpoint = RemoteActivePowerSetpoint;
+                Eleon_SCADA.Settings.Park.TSO_ActivePowerSetpoint = TSOActivePowerSetpoint;
+                Eleon_SCADA.Settings.Park.Market_ActivePowerSetpoint = MarketActivePowerSetpoint;
                 Eleon_SCADA.Settings.Park.ParkMaxPower = ActivePowerMax;
                 Eleon_SCADA.Settings.Park.ActivePowerSetpoint_Mode = SetPoint_Mode;
                 Eleon_SCADA.Settings.Park.Save();

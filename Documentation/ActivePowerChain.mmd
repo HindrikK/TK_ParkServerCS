@@ -1,0 +1,81 @@
+flowchart TD
+    %% Active power control and monitoring chains in Eleon SCADA.
+
+    subgraph UI["Application UI"]
+        ParkSettings["Park settings dialog"]
+        MainDirectSetpoint["Manual service control"]
+    end
+
+    subgraph TSO["TSO interface (IEC-104)"]
+        IECCommandDb["IEC-104 commands"]
+        IECSetpoint["IOA 6201<br/>Active power setpoint"]
+        SecondaryReg["IOA 6<br/>Secondary regulation"]
+        EmergencyLimits["IOA 1-4<br/>emergency limits"]
+        TSOsetpoint["Select active<br>power setpoint"]
+    end
+
+    subgraph Market["Market Interface (Modbus)"]
+        ModbusHolding["Holding registers 100/101<br/>Market active power setpoint"]
+        MarketFallback["Interface disabled/down<br/>fallback to ActivePowerMax"]
+    end
+
+    subgraph Park["Park active power selection"]
+        LocalSP["Local_ActivePowerSetpoint"]
+        TSOSP["TSO_ActivePowerSetpoint"]
+        MarketSP["Market_ActivePowerSetpoint"]
+        MaxPower["ActivePowerMax"]
+        Mode{"ActivePowerSetpoint_Mode"}
+        AutoMode["Mode 0<br/>automatic"]
+        LocalMode["Mode 1<br/>local setpoint"]
+        TSOMode["Mode 2<br/>TSO setpoint"]
+        MarketMode["Mode 3<br/>market setpoint"]
+        Clamp["Clamp selected setpoint<br/>to ActivePowerMax"]
+        SetActivePower["WindPark.SetActivePower()"]
+    end
+
+    subgraph TurbineObject_T01["Turbine T01"]
+        Turbine_T01["Set_PowerSetpoint()"]
+        VestasController["Set_ActivePowerSetpoint()"]
+        TurbineController["Turbine controller"]
+    end
+
+    Turbine["Vestas turbine"]
+
+    ParkSettings --> LocalSP
+    ParkSettings --> TSOSP
+    ParkSettings --> MarketSP
+    ParkSettings --> MaxPower
+    ParkSettings --> Mode
+
+    IECCommandDb --> IECSetpoint
+    IECCommandDb --> SecondaryReg
+    IECCommandDb --> EmergencyLimits
+    IECSetpoint --> TSOsetpoint
+    SecondaryReg -->|"on: IOA 6201<br/>off: ActivePowerMax"| TSOsetpoint
+    EmergencyLimits -->|"80/60/40/20 %<br/>of ActivePowerMax"| TSOsetpoint
+    TSOsetpoint --> TSOSP
+
+    ModbusHolding --> MarketSP
+    MarketFallback --> MarketSP
+
+    MaxPower --> Clamp
+    MaxPower --> MarketFallback
+    LocalSP --> Mode
+    TSOSP --> Mode
+    MarketSP --> Mode
+    Mode --> AutoMode
+    Mode --> LocalMode
+    Mode --> TSOMode
+    Mode --> MarketMode
+    AutoMode --> Clamp
+    LocalMode --> Clamp
+    TSOMode --> Clamp
+    MarketMode --> Clamp
+    Clamp --> SetActivePower
+
+    SetActivePower --> Turbine_T01
+    MainDirectSetpoint --> VestasController
+    Turbine_T01 --> VestasController
+    VestasController --> TurbineController
+
+    TurbineController -->|"RCS protocol"| Turbine

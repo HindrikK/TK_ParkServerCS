@@ -35,6 +35,9 @@
             this.label6 = new System.Windows.Forms.Label();
             this.textBox_RemoteSetpoint = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
+            this.textBox_MarketSetpoint = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
             this.textBox_PowerRamping = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
@@ -51,7 +54,7 @@
             // button_OK
             // 
             this.button_OK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button_OK.Location = new System.Drawing.Point(260, 207);
+            this.button_OK.Location = new System.Drawing.Point(260, 233);
             this.button_OK.Name = "button_OK";
             this.button_OK.Size = new System.Drawing.Size(75, 23);
             this.button_OK.TabIndex = 5;
@@ -63,7 +66,7 @@
             // 
             this.button_Cancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.button_Cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.button_Cancel.Location = new System.Drawing.Point(341, 207);
+            this.button_Cancel.Location = new System.Drawing.Point(341, 233);
             this.button_Cancel.Name = "button_Cancel";
             this.button_Cancel.Size = new System.Drawing.Size(75, 23);
             this.button_Cancel.TabIndex = 7;
@@ -77,6 +80,9 @@
             this.groupBox3.Controls.Add(this.label6);
             this.groupBox3.Controls.Add(this.textBox_RemoteSetpoint);
             this.groupBox3.Controls.Add(this.label7);
+            this.groupBox3.Controls.Add(this.label10);
+            this.groupBox3.Controls.Add(this.textBox_MarketSetpoint);
+            this.groupBox3.Controls.Add(this.label12);
             this.groupBox3.Controls.Add(this.textBox_PowerRamping);
             this.groupBox3.Controls.Add(this.label11);
             this.groupBox3.Controls.Add(this.label5);
@@ -90,7 +96,7 @@
             this.groupBox3.Cursor = System.Windows.Forms.Cursors.Default;
             this.groupBox3.Location = new System.Drawing.Point(19, 12);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(390, 182);
+            this.groupBox3.Size = new System.Drawing.Size(390, 208);
             this.groupBox3.TabIndex = 20;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Power control";
@@ -98,7 +104,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(239, 140);
+            this.label3.Location = new System.Drawing.Point(239, 166);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(40, 13);
             this.label3.TabIndex = 17;
@@ -127,14 +133,41 @@
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(41, 88);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(119, 13);
+            this.label7.Size = new System.Drawing.Size(101, 13);
             this.label7.TabIndex = 8;
-            this.label7.Text = "Remote power setpoint:";
+            this.label7.Text = "TSO power setpoint:";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(257, 114);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(24, 13);
+            this.label10.TabIndex = 20;
+            this.label10.Text = "kW";
+            // 
+            // textBox_MarketSetpoint
+            // 
+            this.textBox_MarketSetpoint.Enabled = false;
+            this.textBox_MarketSetpoint.Location = new System.Drawing.Point(166, 111);
+            this.textBox_MarketSetpoint.Name = "textBox_MarketSetpoint";
+            this.textBox_MarketSetpoint.Size = new System.Drawing.Size(85, 20);
+            this.textBox_MarketSetpoint.TabIndex = 19;
+            this.textBox_MarketSetpoint.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(88, 114);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(72, 13);
+            this.label12.TabIndex = 18;
+            this.label12.Text = "Market power:";
             // 
             // textBox_PowerRamping
             // 
             this.textBox_PowerRamping.Enabled = false;
-            this.textBox_PowerRamping.Location = new System.Drawing.Point(166, 137);
+            this.textBox_PowerRamping.Location = new System.Drawing.Point(166, 163);
             this.textBox_PowerRamping.Name = "textBox_PowerRamping";
             this.textBox_PowerRamping.Size = new System.Drawing.Size(67, 20);
             this.textBox_PowerRamping.TabIndex = 14;
@@ -143,7 +176,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(80, 140);
+            this.label11.Location = new System.Drawing.Point(80, 166);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(80, 13);
             this.label11.TabIndex = 9;
@@ -169,7 +202,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(257, 114);
+            this.label1.Location = new System.Drawing.Point(257, 140);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(24, 13);
             this.label1.TabIndex = 5;
@@ -177,7 +210,7 @@
             // 
             // textBox_ParkMaxPower
             // 
-            this.textBox_ParkMaxPower.Location = new System.Drawing.Point(166, 111);
+            this.textBox_ParkMaxPower.Location = new System.Drawing.Point(166, 137);
             this.textBox_ParkMaxPower.Name = "textBox_ParkMaxPower";
             this.textBox_ParkMaxPower.Size = new System.Drawing.Size(85, 20);
             this.textBox_ParkMaxPower.TabIndex = 4;
@@ -186,7 +219,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(74, 114);
+            this.label2.Location = new System.Drawing.Point(74, 140);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(86, 13);
             this.label2.TabIndex = 3;
@@ -205,9 +238,10 @@
             // 
             this.comboBox_PowerControlMode.FormattingEnabled = true;
             this.comboBox_PowerControlMode.Items.AddRange(new object[] {
-            "No setpoint",
+            "Automatic",
             "Local",
-            "Remote"});
+            "TSO",
+            "Market"});
             this.comboBox_PowerControlMode.Location = new System.Drawing.Point(166, 32);
             this.comboBox_PowerControlMode.Name = "comboBox_PowerControlMode";
             this.comboBox_PowerControlMode.Size = new System.Drawing.Size(85, 21);
@@ -228,7 +262,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.button_Cancel;
-            this.ClientSize = new System.Drawing.Size(428, 242);
+            this.ClientSize = new System.Drawing.Size(428, 268);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.button_Cancel);
             this.Controls.Add(this.button_OK);
@@ -254,6 +288,9 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox textBox_RemoteSetpoint;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox textBox_MarketSetpoint;
+        private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox textBox_PowerRamping;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label5;

@@ -115,7 +115,7 @@
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(169, 16);
             this.label4.TabIndex = 31;
-            this.label4.Text = "Contact: info@eleon.ee";
+            this.label4.Text = "Contact Troonik OÜ";
             // 
             // groupBox_LicenseInfo
             // 

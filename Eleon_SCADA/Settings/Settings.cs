@@ -17,15 +17,20 @@ namespace Eleon_SCADA.Settings
             try
             {
                 //Settings.FilePath = "Settings.xml";
+                EnsureSettingsFile();
                 SettingsFile = System.Xml.Linq.XDocument.Load(FilePath);
+                EnsureRoot();
 
                 AlarmAnnouncement.Load();
                 Application.Load();
                 Database.Load();
                 VestasDriver.Load();
-                IEC104Server.Load();
+                TSOInterface.Load();
                 Park.Load();
                 T01.Load();
+                MarketInterface.Load();
+
+                SaveFile();
             }
             catch (Exception ex)
             {
@@ -38,13 +43,18 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
+                EnsureRoot();
+
                 AlarmAnnouncement.Save();
                 Application.Save();
                 Database.Save();
                 VestasDriver.Save();
-                IEC104Server.Save();
+                TSOInterface.Save();
                 Park.Save();
                 T01.Save();
+                MarketInterface.Save();
+
+                SaveFile();
             }
             catch (Exception ex)
             {
@@ -60,6 +70,136 @@ namespace Eleon_SCADA.Settings
             EnerconMaster.Reset();
             Park.Reset();
             */
+        }
+
+        private static void EnsureSettingsFile()
+        {
+            string directory = System.IO.Path.GetDirectoryName(FilePath);
+            if (!System.IO.Directory.Exists(directory))
+            {
+                System.IO.Directory.CreateDirectory(directory);
+            }
+
+            if (!System.IO.File.Exists(FilePath))
+            {
+                SettingsFile = new System.Xml.Linq.XDocument(new System.Xml.Linq.XElement("Settings"));
+                SaveFile();
+            }
+        }
+
+        private static void EnsureRoot()
+        {
+            if (SettingsFile == null)
+            {
+                SettingsFile = new System.Xml.Linq.XDocument(new System.Xml.Linq.XElement("Settings"));
+            }
+            else if (SettingsFile.Root == null)
+            {
+                SettingsFile.Add(new System.Xml.Linq.XElement("Settings"));
+            }
+            else if (SettingsFile.Root.Name != "Settings")
+            {
+                throw new Exception("Settings root element must be named \"Settings\"");
+            }
+        }
+
+        public static System.Xml.Linq.XElement EnsureSection(string sectionName)
+        {
+            EnsureRoot();
+
+            System.Xml.Linq.XElement section = SettingsFile.Root.Element(sectionName);
+            if (section == null)
+            {
+                section = new System.Xml.Linq.XElement(sectionName);
+                SettingsFile.Root.Add(section);
+            }
+
+            return section;
+        }
+
+        public static string GetValue(string sectionName, string settingName, string defaultValue)
+        {
+            System.Xml.Linq.XElement section = EnsureSection(sectionName);
+            System.Xml.Linq.XElement element = section.Element(settingName);
+            if (element == null)
+            {
+                element = new System.Xml.Linq.XElement(settingName, defaultValue);
+                section.Add(element);
+            }
+
+            return element.Value;
+        }
+
+        public static int GetInt(string sectionName, string settingName, int defaultValue)
+        {
+            string value = GetValue(sectionName, settingName, defaultValue.ToString());
+            int parsedValue;
+            if (!int.TryParse(value, out parsedValue))
+            {
+                throw new Exception("Invalid integer value for " + sectionName + "/" + settingName + ": " + value);
+            }
+
+            return parsedValue;
+        }
+
+        public static ushort GetUInt16(string sectionName, string settingName, ushort defaultValue)
+        {
+            string value = GetValue(sectionName, settingName, defaultValue.ToString());
+            ushort parsedValue;
+            if (!ushort.TryParse(value, out parsedValue))
+            {
+                throw new Exception("Invalid UInt16 value for " + sectionName + "/" + settingName + ": " + value);
+            }
+
+            return parsedValue;
+        }
+
+        public static float GetFloat(string sectionName, string settingName, float defaultValue)
+        {
+            string value = GetValue(sectionName, settingName, defaultValue.ToString());
+            float parsedValue;
+            if (!float.TryParse(value, out parsedValue))
+            {
+                throw new Exception("Invalid float value for " + sectionName + "/" + settingName + ": " + value);
+            }
+
+            return parsedValue;
+        }
+
+        public static bool GetBool(string sectionName, string settingName, bool defaultValue)
+        {
+            string value = GetValue(sectionName, settingName, defaultValue.ToString());
+            bool parsedValue;
+            if (!bool.TryParse(value, out parsedValue))
+            {
+                throw new Exception("Invalid boolean value for " + sectionName + "/" + settingName + ": " + value);
+            }
+
+            return parsedValue;
+        }
+
+        public static void SetValue(string sectionName, string settingName, string value)
+        {
+            System.Xml.Linq.XElement section = EnsureSection(sectionName);
+            System.Xml.Linq.XElement element = section.Element(settingName);
+            if (element == null)
+            {
+                element = new System.Xml.Linq.XElement(settingName);
+                section.Add(element);
+            }
+
+            element.Value = value;
+        }
+
+        public static void SaveFile()
+        {
+            string directory = System.IO.Path.GetDirectoryName(FilePath);
+            if (!System.IO.Directory.Exists(directory))
+            {
+                System.IO.Directory.CreateDirectory(directory);
+            }
+
+            SettingsFile.Save(FilePath);
         }
     }
 
@@ -139,7 +279,6 @@ namespace Eleon_SCADA.Settings
         /// </summary>
         private static List<Alarm_Dispatch.MailRecipient> DeserializeRecipients(string recipients)
         {
-            string Recipients_ = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Recipients");
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Convert.FromBase64String(recipients)))
             {
                 System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf =
@@ -194,8 +333,7 @@ namespace Eleon_SCADA.Settings
         /// </summary>
         private static List<UInt16> DeserializeExcludedStatus(string excludedstatus)
         {
-            string ExcludedStatus_ = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("ExcludedStatus");
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Convert.FromBase64String(ExcludedStatus_)))
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Convert.FromBase64String(excludedstatus)))
             {
                 System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf =
                     new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
@@ -246,16 +384,16 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                TriggerDelay = (int)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("TriggerDelay");
-                DefaultName = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("DefaultName");
-                DefaultAddress = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("DefaultAddress");
-                Subject = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Subject");
-                Server = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Server");
-                Port = (int)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Port");
-                Timeout = (int)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Timeout");
-                FromAddress = (string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("FromAddress");
-                Recipients = DeserializeRecipients((string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Recipients"));
-                ExcludedStatus = DeserializeExcludedStatus((string)Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("ExcludedStatus"));
+                TriggerDelay = Settings.GetInt("AlarmDispatch", "TriggerDelay", TriggerDelay);
+                DefaultName = Settings.GetValue("AlarmDispatch", "DefaultName", DefaultName);
+                DefaultAddress = Settings.GetValue("AlarmDispatch", "DefaultAddress", DefaultAddress);
+                Subject = Settings.GetValue("AlarmDispatch", "Subject", Subject);
+                Server = Settings.GetValue("AlarmDispatch", "Server", Server);
+                Port = Settings.GetInt("AlarmDispatch", "Port", Port);
+                Timeout = Settings.GetInt("AlarmDispatch", "Timeout", Timeout);
+                FromAddress = Settings.GetValue("AlarmDispatch", "FromAddress", FromAddress);
+                Recipients = DeserializeRecipients(Settings.GetValue("AlarmDispatch", "Recipients", SerializeRecipients(Recipients)));
+                ExcludedStatus = DeserializeExcludedStatus(Settings.GetValue("AlarmDispatch", "ExcludedStatus", SerializeExcludedStatus(ExcludedStatus)));
             }
             catch (Exception ex)
             {
@@ -270,18 +408,18 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("TriggerDelay").Value = TriggerDelay.ToString();
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("DefaultName").Value = DefaultName;
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("DefaultAddress").Value = DefaultAddress;
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Subject").Value = Subject;
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Server").Value = Server;
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Port").Value = Port.ToString();
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Timeout").Value = Timeout.ToString();
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("FromAddress").Value = FromAddress;
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("Recipients").Value = SerializeRecipients(Recipients);
-                Settings.SettingsFile.Element("Settings").Element("AlarmDispatch").Element("ExcludedStatus").Value = SerializeExcludedStatus(ExcludedStatus);
+                Settings.SetValue("AlarmDispatch", "TriggerDelay", TriggerDelay.ToString());
+                Settings.SetValue("AlarmDispatch", "DefaultName", DefaultName);
+                Settings.SetValue("AlarmDispatch", "DefaultAddress", DefaultAddress);
+                Settings.SetValue("AlarmDispatch", "Subject", Subject);
+                Settings.SetValue("AlarmDispatch", "Server", Server);
+                Settings.SetValue("AlarmDispatch", "Port", Port.ToString());
+                Settings.SetValue("AlarmDispatch", "Timeout", Timeout.ToString());
+                Settings.SetValue("AlarmDispatch", "FromAddress", FromAddress);
+                Settings.SetValue("AlarmDispatch", "Recipients", SerializeRecipients(Recipients));
+                Settings.SetValue("AlarmDispatch", "ExcludedStatus", SerializeExcludedStatus(ExcludedStatus));
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -312,9 +450,9 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                AutoConnectPark = Convert.ToBoolean(Settings.SettingsFile.Element("Settings").Element("Application").Element("AutoConnectPark").Value);
-                AutoStartIEC104 = Convert.ToBoolean(Settings.SettingsFile.Element("Settings").Element("Application").Element("AutoStartIEC104").Value);
-                AutoLogoutTime = Convert.ToInt32(Settings.SettingsFile.Element("Settings").Element("Application").Element("AutoLogoutTime").Value);
+                AutoConnectPark = Settings.GetBool("Application", "AutoConnectPark", AutoConnectPark);
+                AutoStartIEC104 = Settings.GetBool("Application", "AutoStartIEC104", AutoStartIEC104);
+                AutoLogoutTime = Settings.GetInt("Application", "AutoLogoutTime", AutoLogoutTime);
             }
             catch (Exception ex)
             {
@@ -329,11 +467,11 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("Application").Element("AutoConnectPark").Value = AutoConnectPark.ToString();
-                Settings.SettingsFile.Element("Settings").Element("Application").Element("AutoStartIEC104").Value = AutoStartIEC104.ToString();
-                Settings.SettingsFile.Element("Settings").Element("Application").Element("AutoLogoutTime").Value = AutoLogoutTime.ToString();
+                Settings.SetValue("Application", "AutoConnectPark", AutoConnectPark.ToString());
+                Settings.SetValue("Application", "AutoStartIEC104", AutoStartIEC104.ToString());
+                Settings.SetValue("Application", "AutoLogoutTime", AutoLogoutTime.ToString());
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -363,8 +501,8 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Path = (string)Settings.SettingsFile.Element("Settings").Element("Database").Element("Path");
-                SampleTime = (int)Settings.SettingsFile.Element("Settings").Element("Database").Element("SampleTime");
+                Path = Settings.GetValue("Database", "Path", Path);
+                SampleTime = Settings.GetInt("Database", "SampleTime", SampleTime);
             }
             catch (Exception ex)
             {
@@ -379,10 +517,10 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("Database").Element("Path").Value = Path;
-                Settings.SettingsFile.Element("Settings").Element("Database").Element("SampleTime").Value = SampleTime.ToString();
+                Settings.SetValue("Database", "Path", Path);
+                Settings.SetValue("Database", "SampleTime", SampleTime.ToString());
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -418,14 +556,14 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Baudrate = (int)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("Baudrate");
-                PortName = (string)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PortName");
-                PollInterval1 = (int)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PollInterval1");
-                PollInterval2 = (int)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PollInterval2");
-                Parity = (string)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("Parity");
-                CommTimeout = (int)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("CommTimeout");
-                CommStatusTimeout = (int)Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("CommStatusTimeout");
-                PowerSetpoint = Convert.ToUInt16(Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PowerSetpoint").Value);
+                Baudrate = Settings.GetInt("VestasDriver", "Baudrate", Baudrate);
+                PortName = Settings.GetValue("VestasDriver", "PortName", PortName);
+                PollInterval1 = Settings.GetInt("VestasDriver", "PollInterval1", PollInterval1);
+                PollInterval2 = Settings.GetInt("VestasDriver", "PollInterval2", PollInterval2);
+                Parity = Settings.GetValue("VestasDriver", "Parity", Parity);
+                CommTimeout = Settings.GetInt("VestasDriver", "CommTimeout", CommTimeout);
+                CommStatusTimeout = Settings.GetInt("VestasDriver", "CommStatusTimeout", CommStatusTimeout);
+                PowerSetpoint = Settings.GetUInt16("VestasDriver", "PowerSetpoint", PowerSetpoint);
             }
             catch (Exception ex)
             {
@@ -440,16 +578,16 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("Baudrate").Value = Baudrate.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PortName").Value = PortName.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PollInterval1").Value = PollInterval1.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PollInterval2").Value = PollInterval2.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("Parity").Value = Parity.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("CommTimeout").Value = CommTimeout.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("CommStatusTimeout").Value = CommStatusTimeout.ToString();
-                Settings.SettingsFile.Element("Settings").Element("VestasDriver").Element("PowerSetpoint").Value = PowerSetpoint.ToString();
+                Settings.SetValue("VestasDriver", "Baudrate", Baudrate.ToString());
+                Settings.SetValue("VestasDriver", "PortName", PortName);
+                Settings.SetValue("VestasDriver", "PollInterval1", PollInterval1.ToString());
+                Settings.SetValue("VestasDriver", "PollInterval2", PollInterval2.ToString());
+                Settings.SetValue("VestasDriver", "Parity", Parity);
+                Settings.SetValue("VestasDriver", "CommTimeout", CommTimeout.ToString());
+                Settings.SetValue("VestasDriver", "CommStatusTimeout", CommStatusTimeout.ToString());
+                Settings.SetValue("VestasDriver", "PowerSetpoint", PowerSetpoint.ToString());
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -467,13 +605,13 @@ namespace Eleon_SCADA.Settings
 
 
 
-    static class IEC104Server
+    static class TSOInterface
     {
         public static int Port = 2404;
         public static bool periodicTransmission = false;
         public static int periodicPeriod = 5000;
         public static int MaxNoOfClients = 10;
-        public static string ServerIP = "127.0.0.1";
+        public static string ServerIP = "0.0.0.0";
         public static int ReconnectTime = 20;
         public static int ASDU = 3;
 
@@ -484,13 +622,13 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Port = (int)Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("Port");
-                periodicTransmission = Convert.ToBoolean(Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("periodicTransmission").Value);
-                periodicPeriod = (int)Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("periodicPeriod");
-                MaxNoOfClients = (int)Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("MaxNoOfClients");
-                ServerIP = (string)Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("ServerIP");
-                ReconnectTime = (int)Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("ReconnectTime");
-                ASDU = (int)Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("ASDU");
+                Port = Settings.GetInt("IEC104Server", "Port", Port);
+                periodicTransmission = Settings.GetBool("IEC104Server", "periodicTransmission", periodicTransmission);
+                periodicPeriod = Settings.GetInt("IEC104Server", "periodicPeriod", periodicPeriod);
+                MaxNoOfClients = Settings.GetInt("IEC104Server", "MaxNoOfClients", MaxNoOfClients);
+                ServerIP = Settings.GetValue("IEC104Server", "ServerIP", ServerIP);
+                ReconnectTime = Settings.GetInt("IEC104Server", "ReconnectTime", ReconnectTime);
+                ASDU = Settings.GetInt("IEC104Server", "ASDU", ASDU);
             }
             catch (Exception ex)
             {
@@ -505,15 +643,15 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("Port").Value = Port.ToString();
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("periodicTransmission").Value = periodicTransmission.ToString();
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("periodicPeriod").Value = periodicPeriod.ToString();
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("MaxNoOfClients").Value = MaxNoOfClients.ToString();
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("ServerIP").Value = ServerIP.ToString();
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("ReconnectTime").Value = ReconnectTime.ToString();
-                Settings.SettingsFile.Element("Settings").Element("IEC104Server").Element("ASDU").Value = ASDU.ToString();
+                Settings.SetValue("IEC104Server", "Port", Port.ToString());
+                Settings.SetValue("IEC104Server", "periodicTransmission", periodicTransmission.ToString());
+                Settings.SetValue("IEC104Server", "periodicPeriod", periodicPeriod.ToString());
+                Settings.SetValue("IEC104Server", "MaxNoOfClients", MaxNoOfClients.ToString());
+                Settings.SetValue("IEC104Server", "ServerIP", ServerIP);
+                Settings.SetValue("IEC104Server", "ReconnectTime", ReconnectTime.ToString());
+                Settings.SetValue("IEC104Server", "ASDU", ASDU.ToString());
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -537,7 +675,8 @@ namespace Eleon_SCADA.Settings
         public static ushort ParkMaxPower = 2000;
         public static bool ParkMVBreaker_Status = true;
         public static int ActivePowerSetpoint_Mode = 0;
-        public static ushort Remote_ActivePowerSetpoint = 2000;
+        public static ushort TSO_ActivePowerSetpoint = 2000;
+        public static ushort Market_ActivePowerSetpoint = 2000;
 
         /// <summary>
         /// Read settings from file
@@ -546,11 +685,12 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Local_ActivePowerSetpoint = Convert.ToUInt16(Settings.SettingsFile.Element("Settings").Element("Park").Element("Local_ActivePowerSetpoint").Value);
-                ParkMaxPower = Convert.ToUInt16(Settings.SettingsFile.Element("Settings").Element("Park").Element("ParkMaxPower").Value);
-                ParkMVBreaker_Status = Convert.ToBoolean(Settings.SettingsFile.Element("Settings").Element("Park").Element("ParkMVBreaker_Status").Value);
-                ActivePowerSetpoint_Mode = (int)Settings.SettingsFile.Element("Settings").Element("Park").Element("ActivePowerSetpoint_Mode");
-                Remote_ActivePowerSetpoint = Convert.ToUInt16(Settings.SettingsFile.Element("Settings").Element("Park").Element("Remote_ActivePowerSetpoint").Value);
+                Local_ActivePowerSetpoint = Settings.GetUInt16("Park", "Local_ActivePowerSetpoint", Local_ActivePowerSetpoint);
+                ParkMaxPower = Settings.GetUInt16("Park", "ParkMaxPower", ParkMaxPower);
+                ParkMVBreaker_Status = Settings.GetBool("Park", "ParkMVBreaker_Status", ParkMVBreaker_Status);
+                ActivePowerSetpoint_Mode = Settings.GetInt("Park", "ActivePowerSetpoint_Mode", ActivePowerSetpoint_Mode);
+                TSO_ActivePowerSetpoint = Settings.GetUInt16("Park", "TSO_ActivePowerSetpoint", TSO_ActivePowerSetpoint);
+                Market_ActivePowerSetpoint = Settings.GetUInt16("Park", "Market_ActivePowerSetpoint", Market_ActivePowerSetpoint);
             }
             catch (Exception ex)
             {
@@ -565,13 +705,14 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("Park").Element("Local_ActivePowerSetpoint").Value = Local_ActivePowerSetpoint.ToString();
-                Settings.SettingsFile.Element("Settings").Element("Park").Element("ParkMaxPower").Value = ParkMaxPower.ToString();
-                Settings.SettingsFile.Element("Settings").Element("Park").Element("ParkMVBreaker_Status").Value = ParkMVBreaker_Status.ToString();
-                Settings.SettingsFile.Element("Settings").Element("Park").Element("ActivePowerSetpoint_Mode").Value = ActivePowerSetpoint_Mode.ToString();
-                Settings.SettingsFile.Element("Settings").Element("Park").Element("Remote_ActivePowerSetpoint").Value = Remote_ActivePowerSetpoint.ToString();
+                Settings.SetValue("Park", "Local_ActivePowerSetpoint", Local_ActivePowerSetpoint.ToString());
+                Settings.SetValue("Park", "ParkMaxPower", ParkMaxPower.ToString());
+                Settings.SetValue("Park", "ParkMVBreaker_Status", ParkMVBreaker_Status.ToString());
+                Settings.SetValue("Park", "ActivePowerSetpoint_Mode", ActivePowerSetpoint_Mode.ToString());
+                Settings.SetValue("Park", "TSO_ActivePowerSetpoint", TSO_ActivePowerSetpoint.ToString());
+                Settings.SetValue("Park", "Market_ActivePowerSetpoint", Market_ActivePowerSetpoint.ToString());
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -625,30 +766,30 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                PrimRegulNorm = Convert.ToBoolean(Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimRegulNorm").Value);
-                PrimRegulEmAutoActivate = Convert.ToBoolean(Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimRegulEmAutoActivate").Value);
-                SetpointSendRate = (int)Settings.SettingsFile.Element("Settings").Element("T01").Element("SetpointSendRate");
+                PrimRegulNorm = Settings.GetBool("T01", "PrimRegulNorm", PrimRegulNorm);
+                PrimRegulEmAutoActivate = Settings.GetBool("T01", "PrimRegulEmAutoActivate", PrimRegulEmAutoActivate);
+                SetpointSendRate = Settings.GetInt("T01", "SetpointSendRate", SetpointSendRate);
 
                 // general parameters
-                NominalPower = (int)Settings.SettingsFile.Element("Settings").Element("T01").Element("NominalPower");
-                PowerRamping = (int)Settings.SettingsFile.Element("Settings").Element("T01").Element("PowerRamping");
-                NominalFrequency = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("NominalFrequency").Value);
+                NominalPower = Settings.GetInt("T01", "NominalPower", NominalPower);
+                PowerRamping = Settings.GetInt("T01", "PowerRamping", PowerRamping);
+                NominalFrequency = Settings.GetFloat("T01", "NominalFrequency", NominalFrequency);
 
                 // normal mode parameters
-                PrimReservePercentNorm = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimReservePercentNorm").Value);
-                DroopNorm = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("DroopNorm").Value);
-                DeadbandNorm = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("DeadbandNorm").Value);
+                PrimReservePercentNorm = Settings.GetFloat("T01", "PrimReservePercentNorm", PrimReservePercentNorm);
+                DroopNorm = Settings.GetFloat("T01", "DroopNorm", DroopNorm);
+                DeadbandNorm = Settings.GetFloat("T01", "DeadbandNorm", DeadbandNorm);
 
                 // emergency mode parameters
-                PrimReservePercentEm = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimReservePercentEm").Value);
-                DroopEm = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("DroopEm").Value);
-                DeadbandEm = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("DeadbandEm").Value);
-                MaxFreqChange = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("MaxFreqChange").Value);
-                MaxFreqDeviation = Convert.ToSingle(Settings.SettingsFile.Element("Settings").Element("T01").Element("MaxFreqDeviation").Value);
-                PrimRegulEmResetDelay = (int)Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimRegulEmResetDelay");
+                PrimReservePercentEm = Settings.GetFloat("T01", "PrimReservePercentEm", PrimReservePercentEm);
+                DroopEm = Settings.GetFloat("T01", "DroopEm", DroopEm);
+                DeadbandEm = Settings.GetFloat("T01", "DeadbandEm", DeadbandEm);
+                MaxFreqChange = Settings.GetFloat("T01", "MaxFreqChange", MaxFreqChange);
+                MaxFreqDeviation = Settings.GetFloat("T01", "MaxFreqDeviation", MaxFreqDeviation);
+                PrimRegulEmResetDelay = Settings.GetInt("T01", "PrimRegulEmResetDelay", PrimRegulEmResetDelay);
 
-                AutoResetError = DeserializeAutoResetError(Settings.SettingsFile.Element("Settings").Element("T01").Element("AutoResetError").Value);
-                AutoErrorAckDelay = (int)Settings.SettingsFile.Element("Settings").Element("T01").Element("AutoErrorAckDelay");
+                AutoResetError = DeserializeAutoResetError(Settings.GetValue("T01", "AutoResetError", SerializeAutoResetError(AutoResetError)));
+                AutoErrorAckDelay = Settings.GetInt("T01", "AutoErrorAckDelay", AutoErrorAckDelay);
             }
             catch (Exception ex)
             {
@@ -663,32 +804,32 @@ namespace Eleon_SCADA.Settings
         {
             try
             {
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimRegulNorm").Value = PrimRegulNorm.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimRegulEmAutoActivate").Value = PrimRegulEmAutoActivate.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("SetpointSendRate").Value = SetpointSendRate.ToString();
+                Settings.SetValue("T01", "PrimRegulNorm", PrimRegulNorm.ToString());
+                Settings.SetValue("T01", "PrimRegulEmAutoActivate", PrimRegulEmAutoActivate.ToString());
+                Settings.SetValue("T01", "SetpointSendRate", SetpointSendRate.ToString());
 
                 // general parameters
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("NominalPower").Value = NominalPower.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("PowerRamping").Value = PowerRamping.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("NominalFrequency").Value = NominalFrequency.ToString();
+                Settings.SetValue("T01", "NominalPower", NominalPower.ToString());
+                Settings.SetValue("T01", "PowerRamping", PowerRamping.ToString());
+                Settings.SetValue("T01", "NominalFrequency", NominalFrequency.ToString());
 
                 // normal mode parameters
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimReservePercentNorm").Value = PrimReservePercentNorm.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("DroopNorm").Value = DroopNorm.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("DeadbandNorm").Value = DeadbandNorm.ToString();
+                Settings.SetValue("T01", "PrimReservePercentNorm", PrimReservePercentNorm.ToString());
+                Settings.SetValue("T01", "DroopNorm", DroopNorm.ToString());
+                Settings.SetValue("T01", "DeadbandNorm", DeadbandNorm.ToString());
 
                 // emergency mode parameters
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimReservePercentEm").Value = PrimReservePercentEm.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("DroopEm").Value = DroopEm.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("DeadbandEm").Value = DeadbandEm.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("MaxFreqChange").Value = MaxFreqChange.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("MaxFreqDeviation").Value = MaxFreqDeviation.ToString();
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("PrimRegulEmResetDelay").Value = PrimRegulEmResetDelay.ToString();
+                Settings.SetValue("T01", "PrimReservePercentEm", PrimReservePercentEm.ToString());
+                Settings.SetValue("T01", "DroopEm", DroopEm.ToString());
+                Settings.SetValue("T01", "DeadbandEm", DeadbandEm.ToString());
+                Settings.SetValue("T01", "MaxFreqChange", MaxFreqChange.ToString());
+                Settings.SetValue("T01", "MaxFreqDeviation", MaxFreqDeviation.ToString());
+                Settings.SetValue("T01", "PrimRegulEmResetDelay", PrimRegulEmResetDelay.ToString());
 
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("AutoResetError").Value = SerializeAutoResetError(AutoResetError);
-                Settings.SettingsFile.Element("Settings").Element("T01").Element("AutoErrorAckDelay").Value = AutoErrorAckDelay.ToString();
+                Settings.SetValue("T01", "AutoResetError", SerializeAutoResetError(AutoResetError));
+                Settings.SetValue("T01", "AutoErrorAckDelay", AutoErrorAckDelay.ToString());
 
-                Settings.SettingsFile.Save(Settings.FilePath);
+                Settings.SaveFile();
             }
             catch (Exception ex)
             {
@@ -726,8 +867,7 @@ namespace Eleon_SCADA.Settings
         /// </summary>
         private static List<UInt16> DeserializeAutoResetError(string autoResetError)
         {
-            string AutoResetError_ = (string)Settings.SettingsFile.Element("Settings").Element("T01").Element("AutoResetError");
-            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Convert.FromBase64String(AutoResetError_)))
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Convert.FromBase64String(autoResetError)))
             {
                 System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf =
                     new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
@@ -763,5 +903,66 @@ namespace Eleon_SCADA.Settings
             }
         }
         #endregion
+    }
+
+
+
+    static class MarketInterface
+    {
+        public static bool MarketIfEnable = false;
+        public static string IpAddress = "0.0.0.0";
+        public static int UdpPort = 502;
+        public static int TcpPort = 502;
+        public static bool UdpEnable = true;
+        public static bool TcpEnable = true;
+        public static int MaxActiveConnections = 3;
+        public static int ConnStaleTimeout = 60;
+        public static int ResponseRateLimit = 100;
+        public static int FallbackTimeout = 900;
+
+        public static void Load()
+        {
+            try
+            {
+                MarketIfEnable = Settings.GetBool("MarketInterface", "MarketIfEnable", MarketIfEnable);
+                IpAddress = Settings.GetValue("MarketInterface", "IpAddress", IpAddress);
+                System.Net.IPAddress.Parse(IpAddress);
+                UdpPort = Settings.GetInt("MarketInterface", "UdpPort", UdpPort);
+                TcpPort = Settings.GetInt("MarketInterface", "TcpPort", TcpPort);
+                UdpEnable = Settings.GetBool("MarketInterface", "UdpEnable", UdpEnable);
+                TcpEnable = Settings.GetBool("MarketInterface", "TcpEnable", TcpEnable);
+                MaxActiveConnections = Settings.GetInt("MarketInterface", "MaxActiveConnections", MaxActiveConnections);
+                ConnStaleTimeout = Settings.GetInt("MarketInterface", "ConnStaleTimeout", ConnStaleTimeout);
+                ResponseRateLimit = Settings.GetInt("MarketInterface", "ResponseRateLimit", ResponseRateLimit);
+                FallbackTimeout = Settings.GetInt("MarketInterface", "FallbackTimeout", FallbackTimeout);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to load \"MarketInterface\" settings\n\n" + ex.Message);
+            }
+        }
+
+        public static void Save()
+        {
+            try
+            {
+                Settings.SetValue("MarketInterface", "MarketIfEnable", MarketIfEnable.ToString());
+                Settings.SetValue("MarketInterface", "IpAddress", IpAddress);
+                Settings.SetValue("MarketInterface", "UdpPort", UdpPort.ToString());
+                Settings.SetValue("MarketInterface", "TcpPort", TcpPort.ToString());
+                Settings.SetValue("MarketInterface", "UdpEnable", UdpEnable.ToString());
+                Settings.SetValue("MarketInterface", "TcpEnable", TcpEnable.ToString());
+                Settings.SetValue("MarketInterface", "MaxActiveConnections", MaxActiveConnections.ToString());
+                Settings.SetValue("MarketInterface", "ConnStaleTimeout", ConnStaleTimeout.ToString());
+                Settings.SetValue("MarketInterface", "ResponseRateLimit", ResponseRateLimit.ToString());
+                Settings.SetValue("MarketInterface", "FallbackTimeout", FallbackTimeout.ToString());
+
+                Settings.SaveFile();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error saving \"MarketInterface\" settings\n\n" + ex.Message);
+            }
+        }
     }
 }
