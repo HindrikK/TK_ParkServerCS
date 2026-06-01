@@ -17,8 +17,10 @@ At startup the application performs the following sequence:
    user and schedules automatic shutdown after 60 seconds.
 3. Loads settings from `%APPDATA%\Eleon_SCADA\Settings.xml`.
 4. Loads `PowerCurve_V80.txt`.
-5. Creates the wind park and adds one `Vestas V80` turbine (`T01`).
-6. Creates the Vestas serial controller.
+5. Creates the wind park and adds one `Vestas V80` turbine (`T01`) as a
+   `VestasTurbine` stored through the generic `WindTurbine` park model.
+6. Creates the Vestas RCS serial controller and assigns it to the Vestas
+   turbine wrapper.
 7. Creates and starts alarm dispatch.
 8. Creates the IEC-104 server and IEC-104 interface mapper.
 9. Creates and starts the Market Interface server when enabled in settings.
@@ -190,13 +192,14 @@ form.
 
 ## **Wind Park Model**
 
-The park model currently allocates storage for one active turbine and calculates
-park aggregate values from `T01`. The park update timer runs every `100 ms`.
+The park model stores turbines through the generic `WindTurbine` abstraction.
+The current application creates one active turbine, `T01`, implemented as a
+`VestasTurbine`, and calculates park aggregate values from it. The park update
+timer runs every `100 ms`.
 
 Park-level monitored values include:
 
 - Wind speed and wind direction.
-- Yaw position.
 - Active and reactive power.
 - Voltage and current.
 - Grid-connected state.
@@ -207,6 +210,11 @@ Park-level controls include:
 - Start park.
 - Stop park. In the current Vestas turbine wrapper this maps to pause turbine, because Vestas does not have "Stop" command.
 - Active power setpoint dispatch.
+
+Park control commands are dispatched through virtual command methods on
+`WindTurbine`: `Start_Turbine`, `Stop_Turbine`, `Set_PowerSetpoint` and
+`Reset_Turbine`. Turbine-specific subclasses implement the actual communication
+behavior.
 
 Active power setpoint handling:
 
@@ -219,10 +227,24 @@ Active power setpoint handling:
 - Setpoint mode `3` - market interface.
 - All setpoints are persisted to settings so that it can recover after application restart.
 
-## **T01 Vestas Turbine Model**
+## **Turbine Model**
+
+`WindTurbine` is the generic turbine abstraction used by the park, database,
+alarm and external interface code. It contains common turbine identity,
+measurement, status, statistics and control values. It also defines virtual
+command methods for start, stop, reset and active power setpoint commands.
+
+`VestasTurbine` derives from `WindTurbine` and adapts the Vestas-specific RCS
+communication data to the generic turbine model. Generic values such as active
+power, wind speed, status code, state, nacelle position, production and total
+hours are exposed through the base `WindTurbine` properties. Vestas-specific
+values remain available on `VestasTurbine` and are used by the Vestas-oriented
+forms and diagnostics.
+
+## **Vestas Turbine Model**
 
 The turbine model stores the current values collected from the Vestas
-controller. These include:
+RCS controller. These include:
 
 - Communication status and communication counters.
 - Active power, generator RPM, rotor RPM, wind speed, pitch angle, state and
@@ -242,13 +264,17 @@ controller. These include:
   regulator setpoint.
 - Production hours, production and reactive power.
 
-The turbine wrapper exposes active power setpoint, start, stop/pause and reset
-operations through the Vestas controller.
+The turbine wrapper overrides the generic `WindTurbine` command methods for
+active power setpoint, start, stop/pause and reset operations. These commands
+use the local `VestasRCS` reference assigned to the turbine wrapper, so the
+wrapper does not depend on where the controller is stored globally.
 
-## **Vestas Serial Controller**
+## **Vestas RCS Serial Controller**
 
-The Vestas controller runs a background thread and communicates with the turbine
-through a serial port. It uses timers for:
+`VestasRCS` runs a background thread and communicates with the turbine through a
+serial port. During construction it receives the `WindPark` and the concrete
+`VestasTurbine` it controls, then assigns itself to the turbine wrapper so
+Vestas command overrides can call the controller directly. It uses timers for:
 
 - Communication status timeout per turbine.
 - Fast polling.
@@ -258,7 +284,7 @@ through a serial port. It uses timers for:
 - Automatic error acknowledge delay.
 
 When the port is opened, polling intervals and communication timeouts are loaded
-from settings. The controller polls overview data, wind data, electrical data,
+from settings. `VestasRCS` polls overview data, wind data, electrical data,
 temperature data, power setpoint data, production data and VGMS overview data.
 
 Supported controller actions include:
@@ -438,15 +464,27 @@ The Modbus library supports:
 |4| 501 | Park Active Power | IR | R | int16 | MW | 0.1 | - | - | - |
 |5| 502 | Park Wind Speed | IR | R | uint16 | m/s | 0.1 | - | 0 | - |
 | | | | | | | | | | | |
-|6| 1000 | Turbine #1 Status | IR | R | uint16 | binary | - | 0 | 0 | - |
+|6| 1000 | Turbine #1 Status | IR | R | uint16 | bitfield | - | 0 | 0 | - |
 |7| 1001 | Turbine #1 Active Power | IR | R | int16 | kW | 0 | - | - | - |
 |8| 1002 | Turbine #1 Wind Speed | IR | R | uint16 | m/s | 0.1 | - | 0 | - |
 
 
 Notes:
 
-- Status registers (500 and 1000) are placeholders and currently not implemented.
+- Park status register 500 is a placeholder and is currently not implemented.
+- Turbine status register 1000 returns `WindTurbine.Status` for `T01`.
 - Park active power can be controlled either by register 100 or 101. Writing either one will also automatically adjust the other.
+
+<u>Turbine status bitfield:</u>
+
+| Bit | Meaning |
+| ---: | --- |
+| 0 | Stopped |
+| 1 | Grid connected |
+| 2 | Service mode |
+| 4 | Error |
+| 5 | Remote control |
+| 6 | Low wind |
 
 ### Market Interface Logs
 
@@ -473,6 +511,10 @@ writes a byte to offset `1` of this map when set.
 ## **Known Implementation Notes**
 
 - The application currently creates one turbine (`T01`) in code.
+- The generic `WindTurbine` abstraction is partially populated. Common
+  monitoring, database, alarm and external interface values use generic
+  `WindTurbine` properties, while Vestas-specific UI and diagnostics still cast
+  to `VestasTurbine` for Vestas-only values.
 - Login credentials are hard-coded in source.
 - Some configuration lists are serialized with `BinaryFormatter`.
 - Market Interface status and command registers are placeholders and are not
@@ -588,7 +630,7 @@ communication and visible during communication loss.
 | `Form_DatabaseSettings` | `Settings > Database` | Edits database folder path and logging sample time. Includes a Browse button for selecting a path. |
 | `Form_CommStats` | Park connection status label or communication settings | Shows park/turbine communication counters and statistics. |
 | `Form_CommTerminal` | Communication tooling | Shows sent/received communication frames and supports terminal logging controls. |
-| `Form_CommErrorLog` | Communication tooling | Shows communication error log entries from the Vestas controller. |
+| `Form_CommErrorLog` | Communication tooling | Shows communication error log entries from `VestasRCS`. |
 | `Form_ErrorLogs` | `Tools > Logs > Status logs` | Shows stored status/error log records. |
 | `Form_DataCharts` | `Tools > Logs > Data charts` | Shows logged data in chart form. |
 | `Form_Production` | `Tools > Logs > Production` | Shows turbine production information. |

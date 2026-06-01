@@ -14,8 +14,8 @@ namespace Eleon_SCADA
 
         public System.Threading.Thread myCheckStatusThread;
         Park.WindPark _Park;
-        int[] Error_Code_prev;
-        int[] State_prev;
+        int[] Status_Code_prev;
+        //int[] State_prev;
         public List<System.Net.Mail.MailMessage> Outbox = new List<System.Net.Mail.MailMessage>();      // stores all outgoing messages
         //public List<System.Net.Mail.MailMessage> UnSent = new List<System.Net.Mail.MailMessage>();    // stores all unsent messages
         public List<System.Net.Mail.MailMessage> Sent = new List<System.Net.Mail.MailMessage>();        // stores all sent messages
@@ -28,12 +28,12 @@ namespace Eleon_SCADA
         public Alarm_Dispatch(Park.WindPark _park)
         {
             _Park = _park;
-            Error_Code_prev = new int[_Park.NumOfTurbinesInPark + 1];
-            State_prev = new int[_Park.NumOfTurbinesInPark + 1];
+            Status_Code_prev = new int[_Park.NumOfTurbinesInPark + 1];
+            //State_prev = new int[_Park.NumOfTurbinesInPark + 1];
             for (int i = 1; i <= _Park.NumOfTurbinesInPark; i++)
             {
-                Error_Code_prev[i] = _Park.myTurbines[i].Error_Code;
-                State_prev[i] = _Park.myTurbines[i].State;
+                Status_Code_prev[i] = _Park.myTurbines[i].StatusCode;
+                //State_prev[i] = _Park.myTurbines[i].State;
             }
 
             TriggerDelay_Timer = new System.Timers.Timer();
@@ -73,41 +73,41 @@ namespace Eleon_SCADA
                     {
                         for (int i = 1; i <= _Park.NumOfTurbinesInPark; i++)
                         {
-                            if (_Park.myTurbines[i].Error_Code != Error_Code_prev[i])     // new alarm detected
+                            if (_Park.myTurbines[i].StatusCode != Status_Code_prev[i])     // new alarm detected
                             {
                                 TriggerDelay_Timer.Interval = Eleon_SCADA.Settings.AlarmAnnouncement.TriggerDelay * 1000;   // update timer interval value
                                 //TriggerDelay_Timer.Start();     // restart timer
                                 TriggerDelay_Timer.Enabled = true;     // start timer
                             }
-                            else if (_Park.myTurbines[i].State != State_prev[i] && _Park.myTurbines[i].State == 3)    // check for "Countdown for autostart" state
-                            {
-                                TriggerDelay_Timer.Interval = Eleon_SCADA.Settings.AlarmAnnouncement.TriggerDelay * 1000;   // update timer interval value
-                                //TriggerDelay_Timer.Start();     // restart timer
-                                TriggerDelay_Timer.Enabled = true;     // start timer
-                            }
+                            //else if (_Park.myTurbines[i].State != State_prev[i] && _Park.myTurbines[i].State == 3)    // check for "Countdown for autostart" state
+                            //{
+                            //    TriggerDelay_Timer.Interval = Eleon_SCADA.Settings.AlarmAnnouncement.TriggerDelay * 1000;   // update timer interval value
+                            //    //TriggerDelay_Timer.Start();     // restart timer
+                            //    TriggerDelay_Timer.Enabled = true;     // start timer
+                            //}
 
                             if (TriggerDelayTimer_Flag)     // same alarm has been active long enough to trigger alarm message
                             {
                                 TriggerDelayTimer_Flag = false;
-                                if (!Eleon_SCADA.Settings.AlarmAnnouncement.ExcludedStatus.Exists(x => x == _Park.myTurbines[i].Error_Code))
+                                if (!Eleon_SCADA.Settings.AlarmAnnouncement.ExcludedStatus.Exists(x => x == _Park.myTurbines[i].StatusCode))
                                 {
                                     try
                                     {
-                                        string message = "Turbine " + i + " : " + _Park.myTurbines[i].Error_Code + " - " + 
-                                            Program.myPark.myTurbines[i].Error_Txt;
+                                        string message = "Turbine " + i + " : " + _Park.myTurbines[i].StatusCode + " - " +
+                                            Program.myPark.myTurbines[i].StatusCode_Txt;
                                         SendToAll(message);
                                     }
                                     catch { }
                                 }
-                                else if (_Park.myTurbines[i].State == 3)
-                                {
-                                    try
-                                    {
-                                        string message = "Turbine " + i + " : Countdown for autostart - ";
-                                        SendToAll(message);
-                                    }
-                                    catch { }
-                                }
+                                //else if (_Park.myTurbines[i].State == 3)
+                                //{
+                                //    try
+                                //    {
+                                //        string message = "Turbine " + i + " : Countdown for autostart - ";
+                                //        SendToAll(message);
+                                //    }
+                                //    catch { }
+                                //}
                             }
                         }
                     }
@@ -123,8 +123,8 @@ namespace Eleon_SCADA
 
                 for (int i = 1; i <= _Park.NumOfTurbinesInPark; i++)
                 {
-                    Error_Code_prev[i] = _Park.myTurbines[i].Error_Code;
-                    State_prev[i] = _Park.myTurbines[i].State;
+                    Status_Code_prev[i] = _Park.myTurbines[i].StatusCode;
+                    //State_prev[i] = _Park.myTurbines[i].State;
                 }
 
                 Thread.Sleep(1000);     // check for alarms only every 1s

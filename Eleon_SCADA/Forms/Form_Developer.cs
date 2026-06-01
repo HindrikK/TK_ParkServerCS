@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.OleDb;
+using Eleon_SCADA.Park;
 
 namespace Eleon_SCADA.Forms
 {
@@ -168,7 +169,7 @@ namespace Eleon_SCADA.Forms
         // refresh on-screen values
         private void timer1_Tick(object sender, EventArgs e)
         {
-            label_LocalModeRequest_0.Text = Program.myPark.myTurbines[1].LocalModeRequest.ToString();
+            label_LocalModeRequest_0.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).LocalModeRequest.ToString();
         }
     }
 }

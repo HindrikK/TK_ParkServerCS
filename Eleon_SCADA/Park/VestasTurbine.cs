@@ -6,38 +6,74 @@ using System.Threading.Tasks;
 
 namespace Eleon_SCADA.Park
 {
-    class VestasTurbine
+    class VestasTurbine : WindTurbine
     {
+        private VestasRCS vestasController;
+
+        public int State
+        {
+            get { return State; }
+            set {
+                State = value;
+                switch (value)
+                {
+                    case 4:
+                    case 5:
+                        Status |= statusBit_Error;
+                        break;
+                    case 6:
+                        Status |= statusBit_LowWind;
+                        break;
+                    default:
+                        Status &= unchecked((ushort)~statusBit_Error);
+                        Status &= unchecked((ushort)~statusBit_LowWind);
+                        break;
+                }
+            }
+        }
+        public string State_Txt;
+
         // communication statistics
         public bool CommunicationStatus;
         public UInt16 TurbineComTransmitted;
         public UInt16 TurbineComReceived;
         public UInt16 TurbineComErrors;
 
-        public int Turbine_ID;
-        public string TurbineName;      // identification name for turbine in park
-        public string TurbineType;      // turbine make and model(separated by space), example: "Vestas V80"
-
-
         // Turbine overview
-        public int Active_Power;
+        public int Active_Power
+        {
+            get { return ActivePower; }
+            set { ActivePower = value; }
+        }
         public int Gen_RPM;
         public float Rotor_RPM;
-        public float Windspeed;
+        public float Wind_Speed
+        {
+            get { return WindSpeed; }
+            set { WindSpeed = value; }
+        }
         public float Pitch_Angle;
-        public int State;
-        public string State_Txt = "NA";
-        public int Error_Code;
-        public string Error_Txt = "NA";
 
         // 1 sec. Wind data
-        public float Windspeed_1s;
+        public float Windspeed_1s
+        {
+            get { return WindSpeed; }
+            set { WindSpeed = value; }
+        }
         public float Wind_Direction;
         public float RelativeWind_Direction;
-        public float Nacelle_Direction;
+        public float Nacelle_Direction
+        {
+            get { return NacellePosition; }
+            set { NacellePosition = value; }
+        }
 
         // 1 Sec. Electrical data
-        public int Active_Power_1s;
+        public int Active_Power_1s
+        {
+            get { return ActivePower; }
+            set { ActivePower = value; }
+        }
         public float CosPhi;
         public float Frequency;
         public float Voltage_L1;
@@ -48,17 +84,57 @@ namespace Eleon_SCADA.Park
         public float Current_L3;
 
         // turbine status values (State1)
-        public int OperationState;                  // 0=emergency; 1=stop; 2=pause; 3=run
+        public int OperationState                   // 0=emergency; 1=stop; 2=pause; 3=run
+        {
+            get { return OperationState; }
+            set {
+                OperationState = value;
+                if (value == 3)
+                {
+                    Status &= unchecked((ushort)~statusBit_Stopped); // clear stopped bit
+                }
+                else
+                {
+                    Status |= statusBit_Stopped; // set stopped bit
+                }
+            }
+        }
         public string OperationState_Txt = "NA";
         public int PendOperationState;              // 0=emergency; 1=stop; 2=pause; 3=run
         public string PendOperationState_Txt = "NA";
-        public bool ServiceState;                   // FALSE=normal; TRUE=service
+        public bool ServiceState {                   // FALSE=normal; TRUE=service
+            get { return ServiceState; }
+            set {
+                ServiceState = value;
+                if (value)
+                {
+                    Status |= statusBit_ServiceMode;
+                }
+                else
+                {
+                    Status &= unchecked((ushort)~statusBit_ServiceMode);
+                }
+            }
+        }
         public bool YawCW;                          // yawing CW
         public bool YawCCW;                         // yawing CCW
         public bool CommandAccepted;                // command accepted - TRUE=accepted; FALSE=not accepted
         
         // turbine status values (State2)
-        public bool RemoteControl;                  // remote control possible - TRUE=possible; FALSE=not possible
+        public bool RemoteControl {                  // remote control possible - TRUE=possible; FALSE=not possible
+            get { return RemoteControl; }
+            set {
+                RemoteControl = value;
+                if (value)
+                {
+                    Status |= statusBit_RemoteControl;
+                }
+                else
+                {
+                    Status &= unchecked((ushort)~statusBit_RemoteControl);
+                }
+            }
+        }
         public int YawState;                        // 0=not active; 1=manual yaw; 2=outyawing; 3=auto yaw
         public string YawState_Txt = "NA";
         public bool TurbineAvailable;               // TRUE=available; FALSE=not available
@@ -66,7 +142,20 @@ namespace Eleon_SCADA.Park
         public bool LocalModeRequest;               // local mode request, when key turned
         public bool G1_Connected;
         public bool G2_Connected;
-        public bool G_Connected;                    // general Generator connection status; TRUE if G1 or G2 connected
+        public bool G_Connected {                    // general Generator connection status; TRUE if G1 or G2 connected
+            get { return G_Connected; }
+            set {
+                G_Connected = value;
+                if (value)
+                {
+                    Status |= statusBit_GridConnected;
+                }
+                else
+                {
+                    Status &= unchecked((ushort)~statusBit_GridConnected);
+                }
+            }
+        }
 
         // Temperatures
         public int Temp_Hydraulic;
@@ -87,42 +176,62 @@ namespace Eleon_SCADA.Park
         public int Temp_CoolWaterVCS;
 
         // Power setpoint
-        public int ActivePowerSetpoint;
         public int ReactivePowerSetpoint;
         public int NominalPower;
         public int ActivePowerRegulatorSetpoint;
 
         //
-        public uint Hours;
-        public int Production;
-        public int Reactive_Power;
+        public long Hours
+        {
+            get { return TotalHours;  }
+            set { TotalHours = value; }
+        }
+        public long Production
+        {
+            get { return TotalActiveProduction; }
+            set { TotalActiveProduction = value; }
+        }
+        public int Reactive_Power
+        {
+            get { return ReactivePower; }
+            set { ReactivePower = value; }
+        }
 
 
         public VestasTurbine(int turbineID, string turbineName, string turbineType)
+            : base(turbineID, turbineName, turbineType)
         {
-            Turbine_ID = turbineID;
-            TurbineName = turbineName;
-            TurbineType = turbineType;
+            State_Txt = "NA";
+            StatusCode_Txt = "NA";
         }
 
-        public void Set_PowerSetpoint(short setpoint)
+        public void SetVestasController(VestasRCS controller)
         {
-            Program.myVestasController.Set_ActivePowerSetpoint(Turbine_ID, setpoint);
+            this.vestasController = controller;
         }
 
-        public void Start_Turbine()
+        public override void Set_PowerSetpoint(short setpoint)
         {
-            Program.myVestasController.Start_Turbine(Turbine_ID);
+            if (this.vestasController == null) throw new InvalidOperationException("Vestas controller is not assigned");
+            this.vestasController.Set_ActivePowerSetpoint(Turbine_ID, setpoint);
         }
 
-        public void Stop_Turbine()
+        public override void Start_Turbine()
         {
-            Program.myVestasController.Pause_Turbine(Turbine_ID);
+            if (this.vestasController == null) throw new InvalidOperationException("Vestas controller is not assigned");
+            this.vestasController.Start_Turbine(Turbine_ID);
         }
 
-        public void Reset_Turbine()
+        public override void Stop_Turbine()
         {
-            Program.myVestasController.Ack_Errors(Turbine_ID);
+            if (this.vestasController == null) throw new InvalidOperationException("Vestas controller is not assigned");
+            this.vestasController.Pause_Turbine(Turbine_ID);
+        }
+
+        public override void Reset_Turbine()
+        {
+            if (this.vestasController == null) throw new InvalidOperationException("Vestas controller is not assigned");
+            this.vestasController.Ack_Errors(Turbine_ID);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO.Ports;
+using Eleon_SCADA.Park;
 
 namespace Eleon_SCADA.Park
 {
@@ -17,14 +18,13 @@ namespace Eleon_SCADA.Park
         public UInt16 ParkComErrors;
 
         public UInt16 NumOfTurbinesInPark;
-        public VestasTurbine[] myTurbines;
+        public WindTurbine[] myTurbines;
 
         //public int NumOfTurbinesConnected;         // shows the number of turbines connected to grid
 
         // park measurement values
         public float WindSpeed;                     // wind speed in windpark(usually based on average from all turbines)
         public float WindDirection;                 // wind direction in windpark(usually based on average from all turbines)
-        public int YawPosition;
         public int ActivePower;
         public int ReactivePower;
         public int Voltage;
@@ -153,9 +153,8 @@ namespace Eleon_SCADA.Park
         // park status values
         public bool GridConnected;                   // TRUE when at least one turbine is connected
         //public bool StoppedRemotely;               // TRUE when stop command is received from remote interface
-        //public bool StoppedLocally;                // TRUE when park stopped in the park controller
+        //public bool StoppedLocally;                // TRUE when all turbines stopped locally in turbine or in park controller
         //public bool GridError;                     // TRUE when park stopped by grid error
-        //public bool WaitingWind;                   // TRUE when park stopped because lack of wind
         //public bool ReactivePowerSetpoint_Mode;
         //public bool ActivePowerRampingMode;        // indicates if remote active power ramping values are used for park control
 
@@ -171,7 +170,7 @@ namespace Eleon_SCADA.Park
             this.activePowerMax = Eleon_SCADA.Settings.Park.ParkMaxPower;
             this.activePowerSetpoint_Mode = Eleon_SCADA.Settings.Park.ActivePowerSetpoint_Mode;
 
-            myTurbines = new VestasTurbine[2];
+            myTurbines = new WindTurbine[1];
             myUpdateTimer = new System.Timers.Timer(100);
             myUpdateTimer.Elapsed += new System.Timers.ElapsedEventHandler(myUpdateTimer_Elapsed);
             myUpdateTimer.Start();
@@ -193,7 +192,6 @@ namespace Eleon_SCADA.Park
                 ReactivePower = GetReactivePower();
                 WindSpeed = GetWindSpeed();
                 WindDirection = GetWindDirection();
-                YawPosition = GetYawPosition();
                 Voltage = GetVoltage();
                 Current = GetCurrent();
                 GridConnected = GetGridConnected();
@@ -293,7 +291,7 @@ namespace Eleon_SCADA.Park
             {
                 for (int i = 1; i <= NumOfTurbinesInPark; i++)
                 {
-                    if (myTurbines[i].G_Connected)
+                    if (((VestasTurbine)myTurbines[i]).G_Connected)
                     {
                         return true;
                     }
@@ -314,7 +312,7 @@ namespace Eleon_SCADA.Park
                 int activePower = 0;
                 for (int i = 1; i <= NumOfTurbinesInPark; i++)
                 {
-                    activePower += myTurbines[i].Active_Power;
+                    activePower += ((VestasTurbine)myTurbines[i]).Active_Power;
                 }
                 return activePower;
             }
@@ -332,7 +330,7 @@ namespace Eleon_SCADA.Park
                 int reactivePower = 0;
                 for (int i = 1; i <= NumOfTurbinesInPark; i++)
                 {
-                    reactivePower += myTurbines[i].Reactive_Power;
+                    reactivePower += ((VestasTurbine)myTurbines[i]).Reactive_Power;
                 }
                 return reactivePower;
             }
@@ -351,7 +349,7 @@ namespace Eleon_SCADA.Park
 
                 for (int i = 1; i <= NumOfTurbinesInPark; i++)
                 {
-                    windSpeed += myTurbines[i].Windspeed;
+                    windSpeed += ((VestasTurbine)myTurbines[i]).Wind_Speed;
                 }
                 windSpeed = (float)windSpeed / NumOfTurbinesInPark;
                 return windSpeed;
@@ -373,7 +371,7 @@ namespace Eleon_SCADA.Park
                 //    windDirection += myTurbines[i].WindDirection;
                 //}
                 //windDirection = windDirection / NumOfTurbinesInPark;
-                WindDirection = (int)myTurbines[1].Wind_Direction;
+                WindDirection = (int)((VestasTurbine)myTurbines[1]).Wind_Direction;
                 return WindDirection;
             }
             catch (Exception ex)
@@ -383,32 +381,11 @@ namespace Eleon_SCADA.Park
             }
         }
 
-        private int GetYawPosition()
-        {
-            try
-            {
-                int YawPosition = 0;
-                //for (int i = 1; i <= NumOfTurbinesInPark; i++)
-                //{
-                //    windDirection += myTurbines[i].WindDirection;
-                //}
-                //windDirection = windDirection / NumOfTurbinesInPark;
-                YawPosition = (int)myTurbines[1].Nacelle_Direction;
-                return YawPosition;
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show(ex.Message + "\n( WindPark - GetYawPosition )", "Exception", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
-                return 0;
-            }
-        }
-
-
         // calculate windpark MV level (10,5 kV) voltage
         private int GetVoltage()
         {
-            int voltage = (int)(float)((Program.myPark.myTurbines[1].Voltage_L1 + Program.myPark.myTurbines[1].Voltage_L2 +
-                Program.myPark.myTurbines[1].Voltage_L3) / 3 * 26.25);
+            int voltage = (int)(float)((((VestasTurbine)Program.myPark.myTurbines[1]).Voltage_L1 + ((VestasTurbine)Program.myPark.myTurbines[1]).Voltage_L2 +
+                ((VestasTurbine)Program.myPark.myTurbines[1]).Voltage_L3) / 3 * 26.25);
 
             return voltage;
         }
@@ -421,18 +398,18 @@ namespace Eleon_SCADA.Park
             if (Voltage > 0)    // prevent dividing by zero
             {
                 //return (float)(int)((float)(Program.myPark.myTurbines[1].Active_Power * 1000 / Voltage * 10)) / 10;
-                return (float)(int)((float)(Program.myPark.myTurbines[1].Active_Power * 1000 / Voltage / Math.Sqrt(3) * 10)) / 10;
+                return (float)(int)((float)((VestasTurbine)Program.myPark.myTurbines[1]).Active_Power * 1000 / Voltage / Math.Sqrt(3) * 10) / 10;
             }
             else return 0;
         }
 
         // add one new turbine to park
-        public void AddTurbine(string _turbineType)
-        {
-            NumOfTurbinesInPark++;
-            myTurbines[NumOfTurbinesInPark] = new VestasTurbine(NumOfTurbinesInPark, ("T"
-                + NumOfTurbinesInPark.ToString("D2")), _turbineType);
-        }
+        //public void AddTurbine(string _turbineType)
+        //{
+        //    NumOfTurbinesInPark++;
+        //    myTurbines[NumOfTurbinesInPark] = new VestasTurbine(NumOfTurbinesInPark, ("T"
+        //        + NumOfTurbinesInPark.ToString("D2")), _turbineType);
+        //}
 
         // add a number of new turbines to park
         public void AddTurbines(int _NumOfTurbinesToAdd, string _turbineType)
@@ -440,6 +417,11 @@ namespace Eleon_SCADA.Park
             for (int i = 0; i < _NumOfTurbinesToAdd; i++)
             {
                 NumOfTurbinesInPark++;
+                if (myTurbines.Length <= NumOfTurbinesInPark)
+                {
+                    Array.Resize(ref myTurbines, NumOfTurbinesInPark + 1);
+                }
+
                 myTurbines[NumOfTurbinesInPark] = new VestasTurbine(NumOfTurbinesInPark, ("T"
                     + (NumOfTurbinesInPark).ToString("D2")), _turbineType);
             }

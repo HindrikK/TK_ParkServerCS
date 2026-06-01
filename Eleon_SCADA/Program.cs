@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Configuration;
 using System.Net.Sockets;
 using System.Net;
+using Eleon_SCADA.Park;
 
 
 namespace Eleon_SCADA
@@ -14,7 +15,7 @@ namespace Eleon_SCADA
     static class Program
     {
         public static Park.WindPark myPark;
-        public static Park.VestasController myVestasController;
+        public static Park.VestasRCS myVestasController;
         public static Alarm_Dispatch myAlarmDispatch;
         public static Logging.Databases myDatabases;
         public static IEC104Server.IEC104Server myIEC104Server;
@@ -66,7 +67,7 @@ namespace Eleon_SCADA
                     }
                     myPark = new Park.WindPark();
                     myPark.AddTurbines(1, "Vestas V80");
-                    myVestasController = new Park.VestasController(myPark, myPark.myTurbines);
+                    myVestasController = new Park.VestasRCS(myPark, (VestasTurbine)myPark.myTurbines[1]);
                     if (!Eleon_SCADA.Settings.MarketInterface.MarketIfEnable)
                     {
                         myPark.Market_ActivePowerSetpoint = myPark.ActivePowerMax;

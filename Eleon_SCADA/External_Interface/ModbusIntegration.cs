@@ -103,7 +103,7 @@ namespace Eleon_SCADA
             ModbusApi.CreateInputRegister(database, 501, () => ToInt16Register((int)Math.Round(Program.myPark.ActivePower / 100.0)));
             ModbusApi.CreateInputRegister(database, 502, () => ToUInt16Register(Program.myPark.WindSpeed * 10));
 
-            ModbusApi.CreateInputRegister(database, 1000, () => ModbusRegisters.Turbine1Status);
+            ModbusApi.CreateInputRegister(database, 1000, GetTurbine1Status);
             ModbusApi.CreateInputRegister(database, 1001, () => ToInt16Register(GetTurbine1ActivePower()));
             ModbusApi.CreateInputRegister(database, 1002, () => ToUInt16Register(GetTurbine1WindSpeed() * 10));
         }
@@ -237,7 +237,20 @@ namespace Eleon_SCADA
                 return 0;
             }
 
-            return Program.myPark.myTurbines[1].Active_Power;
+            return Program.myPark.myTurbines[1].ActivePower;
+        }
+
+        private static ushort GetTurbine1Status()
+        {
+            if (Program.myPark == null ||
+                Program.myPark.myTurbines == null ||
+                Program.myPark.myTurbines.Length <= 1 ||
+                Program.myPark.myTurbines[1] == null)
+            {
+                return 0;
+            }
+
+            return Program.myPark.myTurbines[1].Status;
         }
 
         private static float GetTurbine1WindSpeed()
@@ -250,7 +263,7 @@ namespace Eleon_SCADA
                 return 0;
             }
 
-            return Program.myPark.myTurbines[1].Windspeed;
+            return Program.myPark.myTurbines[1].WindSpeed;
         }
     }
 }

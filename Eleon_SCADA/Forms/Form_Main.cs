@@ -1,4 +1,5 @@
-﻿using System;
+using Eleon_SCADA.Park;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -69,29 +70,29 @@ namespace Eleon_SCADA.Forms
                 //label_ParkWindDirection.Text = Program.myPark.WindDirection.ToString();
 
                 // Overview
-                label_Power_01.Text = Program.myPark.myTurbines[1].Active_Power.ToString();
-                label_Wind_01.Text = Program.myPark.myTurbines[1].Windspeed.ToString("F1");
-                //label_WindDirectionOverview_01.Text = Program.myPark.myTurbines[1].Wind_Direction.ToString("F1");
-                label_PitchAngle_01.Text = Program.myPark.myTurbines[1].Pitch_Angle.ToString("F1");
-                label_RPM_gen_01.Text = Program.myPark.myTurbines[1].Gen_RPM.ToString();
-                label_StateCode_01.Text = Program.myPark.myTurbines[1].State.ToString();
-                label_ErrorCode_01.Text = Program.myPark.myTurbines[1].Error_Code.ToString();
+                label_Power_01.Text = Program.myPark.myTurbines[1].ActivePower.ToString();
+                label_Wind_01.Text = Program.myPark.myTurbines[1].WindSpeed.ToString("F1");
+                //label_WindDirectionOverview_01.Text = Program.myPark.myTurbines[1].WindDirection.ToString("F1");
+                label_PitchAngle_01.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Pitch_Angle.ToString("F1");
+                label_RPM_gen_01.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Gen_RPM.ToString();
+                label_StateCode_01.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).State.ToString();
+                label_ErrorCode_01.Text = Program.myPark.myTurbines[1].StatusCode.ToString();
 
-                label_OperationState.Text = Program.myPark.myTurbines[1].OperationState.ToString();
-                label_PendOperationState.Text = Program.myPark.myTurbines[1].PendOperationState.ToString();
+                label_OperationState.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).OperationState.ToString();
+                label_PendOperationState.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).PendOperationState.ToString();
 
                 //label_VDF_Triggered.Text = Program.myPark.myTurbines[1].VDF_Triggered.ToString();
 
                 // Electrical
-                label_Power_1s.Text = Program.myPark.myTurbines[1].Active_Power_1s.ToString();
-                label_CosPhi.Text = Program.myPark.myTurbines[1].CosPhi.ToString("F2");
-                label_Frequency.Text = Program.myPark.myTurbines[1].Frequency.ToString("F2");
-                label_Voltage_L1.Text = Program.myPark.myTurbines[1].Voltage_L1.ToString();
-                label_Voltage_L2.Text = Program.myPark.myTurbines[1].Voltage_L3.ToString();
-                label_Voltage_L3.Text = Program.myPark.myTurbines[1].Voltage_L2.ToString();
-                label_Current_L1.Text = Program.myPark.myTurbines[1].Current_L1.ToString();
-                label_Current_L2.Text = Program.myPark.myTurbines[1].Current_L2.ToString();
-                label_Current_L3.Text = Program.myPark.myTurbines[1].Current_L3.ToString();
+                label_Power_1s.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Active_Power_1s.ToString();
+                label_CosPhi.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).CosPhi.ToString("F2");
+                label_Frequency.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Frequency.ToString("F2");
+                label_Voltage_L1.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Voltage_L1.ToString();
+                label_Voltage_L2.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Voltage_L3.ToString();
+                label_Voltage_L3.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Voltage_L2.ToString();
+                label_Current_L1.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Current_L1.ToString();
+                label_Current_L2.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Current_L2.ToString();
+                label_Current_L3.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Current_L3.ToString();
             }
             catch (Exception ex)
             {
@@ -105,24 +106,24 @@ namespace Eleon_SCADA.Forms
             try
             {
                 // Top banner
-                label_ParkProduction.Text = Program.myPark.myTurbines[1].Production.ToString();
+                label_ParkProduction.Text = Program.myPark.myTurbines[1].TotalActiveProduction.ToString();
 
                 // Overview TAB
-                if (Program.myPark.myTurbines[1].ServiceState) label_ServiceState.Text = "Service state active";
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).ServiceState) label_ServiceState.Text = "Service state active";
                 else label_ServiceState.Text = "Service state unactive";
-                if (Program.myPark.myTurbines[1].YawCW) label_YawStatus.Text = "Yawing CW";
-                else if (Program.myPark.myTurbines[1].YawCCW) label_YawStatus.Text = "Yawing CCW";
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).YawCW) label_YawStatus.Text = "Yawing CW";
+                else if (((VestasTurbine)Program.myPark.myTurbines[1]).YawCCW) label_YawStatus.Text = "Yawing CCW";
                 else label_YawStatus.Text = "Yaw stopped";
-                if (Program.myPark.myTurbines[1].RemoteControl) label_RemoteControl.Text = "Remote control enabled";
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).RemoteControl) label_RemoteControl.Text = "Remote control enabled";
                 else label_RemoteControl.Text = "Remote control disabled";
-                label_YawState.Text = Program.myPark.myTurbines[1].YawState.ToString();
-                if (Program.myPark.myTurbines[1].TurbineAvailable) label_TurbineAvailable.Text = "Turbine available";
+                label_YawState.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).YawState.ToString();
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).TurbineAvailable) label_TurbineAvailable.Text = "Turbine available";
                 else label_TurbineAvailable.Text = "Turbine not available";
-                if (Program.myPark.myTurbines[1].G1_Connected) label_G_Connected.Text = "G1 connected";
-                else if (Program.myPark.myTurbines[1].G2_Connected) label_G_Connected.Text = "G2 connected";
-                else if (Program.myPark.myTurbines[1].G2_Connected && Program.myPark.myTurbines[1].G2_Connected) label_G_Connected.Text = "Gen connected";
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).G1_Connected) label_G_Connected.Text = "G1 connected";
+                else if (((VestasTurbine)Program.myPark.myTurbines[1]).G2_Connected) label_G_Connected.Text = "G2 connected";
+                else if (((VestasTurbine)Program.myPark.myTurbines[1]).G2_Connected && ((VestasTurbine)Program.myPark.myTurbines[1]).G2_Connected) label_G_Connected.Text = "Gen connected";
                 else label_G_Connected.Text = "Gen not connected";
-                if (Program.myPark.myTurbines[1].CommunicationStatus)
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).CommunicationStatus)
                 {
                     tabControl_Main.TabPages[0].BackColor = Color.SteelBlue;
                     label_CommStatus_01.Visible = false;
@@ -133,18 +134,17 @@ namespace Eleon_SCADA.Forms
                     label_CommStatus_01.Visible = true;
                 }
 
-                label_StateTxt.Text = Program.myPark.myTurbines[1].State_Txt;
-                label_Error_Txt.Text = Program.myPark.myTurbines[1].Error_Txt;
-                label_OpStateTxt.Text = Program.myPark.myTurbines[1].OperationState_Txt;
-                label_PendOpStateTxt.Text = Program.myPark.myTurbines[1].PendOperationState_Txt;
-                label_YawStateTxt.Text = Program.myPark.myTurbines[1].YawState_Txt;
-
+                label_StateTxt.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).State_Txt;
+                label_Error_Txt.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).StatusCode_Txt;
+                label_OpStateTxt.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).OperationState_Txt;
+                label_PendOpStateTxt.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).PendOperationState_Txt;
+                label_YawStateTxt.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).YawState_Txt;
 
                 // Electrical TAB
-                label_Production.Text = Program.myPark.myTurbines[1].Production.ToString();
-                label_PowerControllerSetpoint.Text = Program.myPark.myTurbines[1].ActivePowerRegulatorSetpoint.ToString();
-                label_PowerSetpoint.Text = Program.myPark.myTurbines[1].ActivePowerSetpoint.ToString();
-                label_ReactivePowerSetpoint.Text = Program.myPark.myTurbines[1].ReactivePowerSetpoint.ToString();
+                label_Production.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Production.ToString();
+                label_PowerControllerSetpoint.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).ActivePowerRegulatorSetpoint.ToString();
+                label_PowerSetpoint.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).ActivePowerSetpoint.ToString();
+                label_ReactivePowerSetpoint.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).ReactivePowerSetpoint.ToString();
 
                 // Wind TAB
                 //label_WindDirection_01.Text = Program.myPark.myTurbines[1].Wind_Direction.ToString("F1");
@@ -181,27 +181,27 @@ namespace Eleon_SCADA.Forms
 
 
                 // Temperatures TAB
-                label_Temp_Hydraulic.Text = Program.myPark.myTurbines[1].Temp_Hydraulic.ToString();
-                label_Temp_Environment.Text = Program.myPark.myTurbines[1].Temp_Environment.ToString();
-                label_Temp_Gear.Text = Program.myPark.myTurbines[1].Temp_Gear.ToString();
-                label_Temp_Generator.Text = Program.myPark.myTurbines[1].Temp_Generator.ToString();
-                label_Temp_SlipringVCS.Text = Program.myPark.myTurbines[1].Temp_SlipringVCS.ToString();
-                label_Temp_GearBearing.Text = Program.myPark.myTurbines[1].Temp_GearBearing.ToString();
-                label_Temp_HubController.Text = Program.myPark.myTurbines[1].Temp_HubController.ToString();
-                label_Temp_Nacelle.Text = Program.myPark.myTurbines[1].Temp_Nacelle.ToString();
-                label_Temp_TopController.Text = Program.myPark.myTurbines[1].Temp_TopController.ToString();
-                label_Temp_BusBar.Text = Program.myPark.myTurbines[1].Temp_BusBar.ToString();
-                label_Temp_Spinner.Text = Program.myPark.myTurbines[1].Temp_Spinner.ToString();
-                label_Temp_HVTransformerL1.Text = Program.myPark.myTurbines[1].Temp_HVTransformerL1.ToString();
-                label_Temp_HVTransformerL2.Text = Program.myPark.myTurbines[1].Temp_HVTransformerL2.ToString();
-                label_Temp_HVTransformerL3.Text = Program.myPark.myTurbines[1].Temp_HVTransformerL3.ToString();
-                label_Temp_GeneratorBearing.Text = Program.myPark.myTurbines[1].Temp_GeneratorBearing.ToString();
-                label_Temp_CoolWaterVCS.Text = Program.myPark.myTurbines[1].Temp_CoolWaterVCS.ToString();
+                label_Temp_Hydraulic.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_Hydraulic.ToString();
+                label_Temp_Environment.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_Environment.ToString();
+                label_Temp_Gear.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_Gear.ToString();
+                label_Temp_Generator.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_Generator.ToString();
+                label_Temp_SlipringVCS.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_SlipringVCS.ToString();
+                label_Temp_GearBearing.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_GearBearing.ToString();
+                label_Temp_HubController.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_HubController.ToString();
+                label_Temp_Nacelle.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_Nacelle.ToString();
+                label_Temp_TopController.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_TopController.ToString();
+                label_Temp_BusBar.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_BusBar.ToString();
+                label_Temp_Spinner.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_Spinner.ToString();
+                label_Temp_HVTransformerL1.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_HVTransformerL1.ToString();
+                label_Temp_HVTransformerL2.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_HVTransformerL2.ToString();
+                label_Temp_HVTransformerL3.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_HVTransformerL3.ToString();
+                label_Temp_GeneratorBearing.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_GeneratorBearing.ToString();
+                label_Temp_CoolWaterVCS.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).Temp_CoolWaterVCS.ToString();
 
 
                 // Control TAB
-                label_ActivePowerSetpoint_1.Text = Program.myPark.myTurbines[1].ActivePowerSetpoint.ToString();
-                label_ReactivePowerSetpoint_1.Text = Program.myPark.myTurbines[1].ReactivePowerSetpoint.ToString();
+                label_ActivePowerSetpoint_1.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).ActivePowerSetpoint.ToString();
+                label_ReactivePowerSetpoint_1.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).ReactivePowerSetpoint.ToString();
 
 
                 // Bottom status bar
@@ -455,7 +455,7 @@ namespace Eleon_SCADA.Forms
         {
             if (Program.myVestasController.PortIsOpen)
             {
-                if (Program.myPark.myTurbines[1].CommunicationStatus)
+                if (((VestasTurbine)Program.myPark.myTurbines[1]).CommunicationStatus)
                 {
                     StatusLabel_ParkConnection.Text = "Connected";
                     StatusLabel_ParkConnection.BackColor = Color.LightSteelBlue;
@@ -700,7 +700,7 @@ namespace Eleon_SCADA.Forms
 
         private void LogInAdmin()
         {
-            if (Program.myPark.myTurbines[1].CommunicationStatus)
+            if (((VestasTurbine)Program.myPark.myTurbines[1]).CommunicationStatus)
             {
                 ToolStripMenuItem_Control.Enabled = true;
             }

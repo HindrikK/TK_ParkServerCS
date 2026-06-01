@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Eleon_SCADA.Park
 {
-    class VestasController
+    class VestasRCS
     {
         const int RCV_BUF_SIZE = 128;               // size of serial data receive buffer
         WindPark _Park;
-        VestasTurbine[] _Turbines;
+        VestasTurbine turbine;
         public FiFoList ErrorLog = new FiFoList(20);
         public FiFoList TerminalSentLog = new FiFoList(25);
         public FiFoList TerminalReceivedLog = new FiFoList(25);
@@ -45,12 +45,13 @@ namespace Eleon_SCADA.Park
 
 
         // CONSTRUCTOR
-        public VestasController(WindPark _park, VestasTurbine[] _turbines)
+        public VestasRCS(WindPark _park, VestasTurbine _turbine)
         {
             try
             {
                 _Park = _park;
-                _Turbines = _turbines;
+                this.turbine = _turbine;
+                this.turbine.SetVestasController(this);
 
                 // set up timers
                 CommStatus_Timer = new System.Timers.Timer[_Park.NumOfTurbinesInPark];
@@ -112,14 +113,14 @@ namespace Eleon_SCADA.Park
         private void CommStatus_Timer_Elapsed(object sender, System.EventArgs e)
         {
             // Send alarm message only if local mode request is not active and communication status is lost first time
-            if (!_Turbines[1].LocalModeRequest && _Turbines[1].CommunicationStatus)
+            if (!turbine.LocalModeRequest && turbine.CommunicationStatus)
             {
                 string message = "System alarm - No communication to turbine T01";
                 Program.myAlarmDispatch.SendToAll(message);
             }
 
             CommStatus_Timer[0].Enabled = false;
-            _Turbines[1].CommunicationStatus = false;   // this line must be located after IF case above(to detect and send alarm only in first occurance of comm loss)
+            turbine.CommunicationStatus = false;   // this line must be located after IF case above(to detect and send alarm only in first occurance of comm loss)
         }
 
         public void Poll1_Timer_Elapsed(object sender, System.EventArgs e)
@@ -148,14 +149,14 @@ namespace Eleon_SCADA.Park
             AutoErrorAck_Timer.Stop();
 
             // if that code is listed in Auto Reset list - send reset and start commands
-            if (Eleon_SCADA.Settings.T01.AutoResetError.Exists(x => x == _Turbines[1].Error_Code))
+            if (Eleon_SCADA.Settings.T01.AutoResetError.Exists(x => x == turbine.StatusCode))
             {
                 try
                 {
                     Program.myAlarmDispatch.SendAnnouncement("hindrik@eleon.ee", "Auto reset for error: " + errorCode_Prev);
-                    _Turbines[1].Reset_Turbine();
+                    turbine.Reset_Turbine();
                     Thread.Sleep(100);  // create 100 ms pause between reset and start commands just to be safe
-                    _Turbines[1].Start_Turbine();
+                    turbine.Start_Turbine();
                 }
                 catch { }
             }
@@ -209,9 +210,9 @@ namespace Eleon_SCADA.Park
                 _Park.ParkComReceived = 0;
                 for (uint i = 1; i <= _Park.NumOfTurbinesInPark; i++)
                 {
-                    _Turbines[i].TurbineComErrors = 0;
-                    _Turbines[i].TurbineComTransmitted = 0;
-                    _Turbines[i].TurbineComReceived = 0;
+                    turbine.TurbineComErrors = 0;
+                    turbine.TurbineComTransmitted = 0;
+                    turbine.TurbineComReceived = 0;
                 }
 
                 // load timer intervals
@@ -242,7 +243,7 @@ namespace Eleon_SCADA.Park
             // clear comm status for all turbines
             for (uint i = 1; i <= _Park.NumOfTurbinesInPark; i++)
             {
-                _Turbines[i].CommunicationStatus = false;
+                turbine.CommunicationStatus = false;
             }
             PortIsOpen = false;
             Poll1_Timer.Stop();
@@ -324,7 +325,7 @@ namespace Eleon_SCADA.Park
 
             // increase data Tx counters
             _Park.ParkComTransmitted++;
-            _Turbines[_turbineID].TurbineComTransmitted++;
+            turbine.TurbineComTransmitted++;
 
             // Add frame to terminal log
             if (TerminalLogging)
@@ -334,7 +335,7 @@ namespace Eleon_SCADA.Park
                 {
                     frame += data1[i].ToString("X2") + " ";
                 }
-                TerminalSentLog.Add_WithTime(_Turbines[_turbineID].TurbineComTransmitted + "-  " + frame);
+                TerminalSentLog.Add_WithTime(turbine.TurbineComTransmitted + "-  " + frame);
             }
 
             // receive data
@@ -344,7 +345,7 @@ namespace Eleon_SCADA.Park
             {
                 // increase data Rx counters
                 _Park.ParkComReceived++;
-                _Turbines[_turbineID].TurbineComReceived++;
+                turbine.TurbineComReceived++;
 
                 // Add frame to terminal log
                 if (TerminalLogging)
@@ -354,7 +355,7 @@ namespace Eleon_SCADA.Park
                     {
                         frame += receiveBuffer[i].ToString("X2") + " ";
                     }
-                    TerminalReceivedLog.Add_WithTime(_Turbines[_turbineID].TurbineComReceived + "-  " + frame);
+                    TerminalReceivedLog.Add_WithTime(turbine.TurbineComReceived + "-  " + frame);
                 }
 
 
@@ -379,7 +380,7 @@ namespace Eleon_SCADA.Park
 
                 // From this point, we are sure that turbine has replied to our request, so we set CommunicationStatus to TRUE and
                 // deactivate communication status timeout countdown
-                _Turbines[_turbineID].CommunicationStatus = true;
+                turbine.CommunicationStatus = true;
                 CommStatus_Timer[_turbineID - 1].Enabled = false;
 
 
@@ -445,7 +446,7 @@ namespace Eleon_SCADA.Park
             {
                 // increase data Rx counters
                 _Park.ParkComReceived++;
-                _Turbines[_turbineID].TurbineComReceived++;
+                turbine.TurbineComReceived++;
 
                 // Add frame to terminal log
                 if (TerminalLogging)
@@ -455,7 +456,7 @@ namespace Eleon_SCADA.Park
                     {
                         frame += receiveBuffer[i].ToString("X2") + " ";
                     }
-                    TerminalReceivedLog.Add_WithTime(_Turbines[_turbineID].TurbineComReceived + "-  " + frame);
+                    TerminalReceivedLog.Add_WithTime(turbine.TurbineComReceived + "-  " + frame);
                 }
 
                 CommStatus_Timer[_turbineID - 1].Enabled = true;    // Activate communication status timeout countdown for this turbine
@@ -493,10 +494,10 @@ namespace Eleon_SCADA.Park
                             Get_Overview(1);
 
                             // update status texts
-                            _Turbines[1].State_Txt = Get_State_Txt(_Turbines[1].State);
-                            _Turbines[1].OperationState_Txt = Get_OperationState_Txt(_Turbines[1].OperationState);
-                            _Turbines[1].PendOperationState_Txt = Get_OperationState_Txt(_Turbines[1].PendOperationState);
-                            _Turbines[1].YawState_Txt = Get_YawState_Txt(_Turbines[1].YawState);
+                            turbine.State_Txt = Get_State_Txt(turbine.State);
+                            turbine.OperationState_Txt = Get_OperationState_Txt(turbine.OperationState);
+                            turbine.PendOperationState_Txt = Get_OperationState_Txt(turbine.PendOperationState);
+                            turbine.YawState_Txt = Get_YawState_Txt(turbine.YawState);
 
                             Get_WindData(1);
                             Get_ElectricalData(1);
@@ -512,12 +513,12 @@ namespace Eleon_SCADA.Park
                             Poll2_TimerElapsed_Flag = false;
 
                             // check if new error code received
-                            if (errorCode_Prev != _Turbines[1].Error_Code)
+                            if (errorCode_Prev != turbine.StatusCode)
                             {
-                                errorCode_Prev = _Turbines[1].Error_Code;
+                                errorCode_Prev = turbine.StatusCode;
 
                                 // if that code is listed in Auto Reset list - send reset and start commands automatically
-                                if (Eleon_SCADA.Settings.T01.AutoResetError.Exists(x => x == _Turbines[1].Error_Code))
+                                if (Eleon_SCADA.Settings.T01.AutoResetError.Exists(x => x == turbine.StatusCode))
                                 {
                                     try
                                     {
@@ -530,13 +531,13 @@ namespace Eleon_SCADA.Park
                             }
 
                             // update status texts
-                            _Turbines[1].Error_Txt = Get_ErrorStatus_Txt(_Turbines[1].Error_Code);
+                            turbine.StatusCode_Txt = Get_ErrorStatus_Txt(turbine.StatusCode);
 
                             Get_TemperatureData(1);
                             Get_PowerSetpointData(1);
                             Get_ReactivePowerSetpoint(1);
                             // set reactive power value from setpoint
-                            _Turbines[1].Reactive_Power = Program.myPark.myTurbines[1].ReactivePowerSetpoint;
+                            turbine.Reactive_Power = turbine.ReactivePowerSetpoint;
                         }
 
                         if (Poll10s_TimerElapsed_Flag)
@@ -567,27 +568,26 @@ namespace Eleon_SCADA.Park
 
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
-                    _Turbines[_turbineID].Active_Power = (short)(receiveBuffer[17] * 256 + receiveBuffer[18]) / 10;
-                    _Turbines[_turbineID].Gen_RPM = (ushort)(receiveBuffer[19] * 256 + receiveBuffer[20]);
-                    _Turbines[_turbineID].Rotor_RPM = (float)(ushort)(receiveBuffer[21] * 256 + receiveBuffer[22]) / 10;
-                    _Turbines[_turbineID].Windspeed = (float)(ushort)(receiveBuffer[23] * 256 + receiveBuffer[24]) / 10;
-                    _Turbines[_turbineID].Pitch_Angle = (float)(short)(receiveBuffer[25] * 256 + receiveBuffer[26]) / 10;
-                    _Turbines[_turbineID].State = (int)(receiveBuffer[27] * 256 + receiveBuffer[28]);
-
+                    turbine.Active_Power = (short)(receiveBuffer[17] * 256 + receiveBuffer[18]) / 10;
+                    turbine.Gen_RPM = (ushort)(receiveBuffer[19] * 256 + receiveBuffer[20]);
+                    turbine.Rotor_RPM = (float)(ushort)(receiveBuffer[21] * 256 + receiveBuffer[22]) / 10;
+                    turbine.Wind_Speed = (float)(ushort)(receiveBuffer[23] * 256 + receiveBuffer[24]) / 10;
+                    turbine.Pitch_Angle = (float)(short)(receiveBuffer[25] * 256 + receiveBuffer[26]) / 10;
+                    turbine.State = (int)(receiveBuffer[27] * 256 + receiveBuffer[28]);
                     if (receiveBuffer[5] == 28)     //read error code only if it is received(longer message)
                     {
-                        _Turbines[_turbineID].Error_Code = (int)(receiveBuffer[29] * 256 + receiveBuffer[30]);
+                        turbine.StatusCode = (int)(receiveBuffer[29] * 256 + receiveBuffer[30]);
                     }
                     else
                     {
-                        _Turbines[_turbineID].Error_Code = 0;
+                        turbine.StatusCode = 0;
                     }
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Overview data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Overview data - " + ex.Message);
                     return;
                 }
             }
@@ -605,17 +605,17 @@ namespace Eleon_SCADA.Park
 
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
-                    _Turbines[_turbineID].Windspeed_1s = (float)(ushort)(receiveBuffer[11] * 256 + receiveBuffer[12]) / 10;
+                    turbine.Windspeed_1s = (float)(ushort)(receiveBuffer[11] * 256 + receiveBuffer[12]) / 10;
                     float relDir = (float)(short)(receiveBuffer[13] * 256 + receiveBuffer[14]) / 10;
-                    _Turbines[_turbineID].RelativeWind_Direction = Misc_Functions.CalcAngleDistanceBetween(0, relDir);
-                    _Turbines[_turbineID].Wind_Direction = (float)(short)(receiveBuffer[15] * 256 + receiveBuffer[16]) / 10;
-                    _Turbines[_turbineID].Nacelle_Direction = (float)(short)(receiveBuffer[17] * 256 + receiveBuffer[18]) / 10;
+                    turbine.RelativeWind_Direction = Misc_Functions.CalcAngleDistanceBetween(0, relDir);
+                    turbine.Wind_Direction = (float)(short)(receiveBuffer[15] * 256 + receiveBuffer[16]) / 10;
+                    turbine.Nacelle_Direction = (float)(short)(receiveBuffer[17] * 256 + receiveBuffer[18]) / 10;
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Wind data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Wind data - " + ex.Message);
                     return;
                 }
             }
@@ -633,21 +633,21 @@ namespace Eleon_SCADA.Park
 
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
-                    _Turbines[_turbineID].Active_Power_1s = (short)(receiveBuffer[11] * 256 + receiveBuffer[12]) / 10;
-                    _Turbines[_turbineID].CosPhi = (float)(ushort)(receiveBuffer[13] * 256 + receiveBuffer[14]) / 100;
-                    _Turbines[_turbineID].Frequency = (float)(ushort)(receiveBuffer[15] * 256 + receiveBuffer[16]) / 100;
-                    _Turbines[_turbineID].Voltage_L1 = (ushort)(receiveBuffer[17] * 256 + receiveBuffer[18]) / 10;
-                    _Turbines[_turbineID].Voltage_L2 = (ushort)(receiveBuffer[19] * 256 + receiveBuffer[20]) / 10;
-                    _Turbines[_turbineID].Voltage_L3 = (ushort)(receiveBuffer[21] * 256 + receiveBuffer[22]) / 10;
-                    _Turbines[_turbineID].Current_L1 = (ushort)(receiveBuffer[23] * 256 + receiveBuffer[24]) / 10;
-                    _Turbines[_turbineID].Current_L2 = (ushort)(receiveBuffer[25] * 256 + receiveBuffer[26]) / 10;
-                    _Turbines[_turbineID].Current_L3 = (ushort)(receiveBuffer[27] * 256 + receiveBuffer[28]) / 10;
+                    turbine.Active_Power_1s = (short)(receiveBuffer[11] * 256 + receiveBuffer[12]) / 10;
+                    turbine.CosPhi = (float)(ushort)(receiveBuffer[13] * 256 + receiveBuffer[14]) / 100;
+                    turbine.Frequency = (float)(ushort)(receiveBuffer[15] * 256 + receiveBuffer[16]) / 100;
+                    turbine.Voltage_L1 = (ushort)(receiveBuffer[17] * 256 + receiveBuffer[18]) / 10;
+                    turbine.Voltage_L2 = (ushort)(receiveBuffer[19] * 256 + receiveBuffer[20]) / 10;
+                    turbine.Voltage_L3 = (ushort)(receiveBuffer[21] * 256 + receiveBuffer[22]) / 10;
+                    turbine.Current_L1 = (ushort)(receiveBuffer[23] * 256 + receiveBuffer[24]) / 10;
+                    turbine.Current_L2 = (ushort)(receiveBuffer[25] * 256 + receiveBuffer[26]) / 10;
+                    turbine.Current_L3 = (ushort)(receiveBuffer[27] * 256 + receiveBuffer[28]) / 10;
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - El data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - El data - " + ex.Message);
                     return;
                 }
             }
@@ -660,7 +660,7 @@ namespace Eleon_SCADA.Park
             // read currently active reactive power setpoint value
             Value = Read_Parameter(_turbineID, 7, 21);
 
-            _Turbines[_turbineID].ReactivePowerSetpoint = Value.Value;
+            turbine.ReactivePowerSetpoint = Value.Value;
         }
 
         private void Get_TemperatureData(int _turbineID)
@@ -675,28 +675,28 @@ namespace Eleon_SCADA.Park
 
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
-                    _Turbines[_turbineID].Temp_Hydraulic = (short)(receiveBuffer[17] * 256 + receiveBuffer[18]);
-                    _Turbines[_turbineID].Temp_Environment = (short)(receiveBuffer[19] * 256 + receiveBuffer[20]);
-                    _Turbines[_turbineID].Temp_Gear = (short)(receiveBuffer[21] * 256 + receiveBuffer[22]);
-                    _Turbines[_turbineID].Temp_Generator = (short)(receiveBuffer[23] * 256 + receiveBuffer[24]);
-                    _Turbines[_turbineID].Temp_SlipringVCS = (short)(receiveBuffer[25] * 256 + receiveBuffer[26]);
-                    _Turbines[_turbineID].Temp_GearBearing = (short)(receiveBuffer[27] * 256 + receiveBuffer[28]);
-                    _Turbines[_turbineID].Temp_HubController = (short)(receiveBuffer[29] * 256 + receiveBuffer[30]);
-                    _Turbines[_turbineID].Temp_Nacelle = (short)(receiveBuffer[31] * 256 + receiveBuffer[32]);
-                    _Turbines[_turbineID].Temp_TopController = (short)(receiveBuffer[35] * 256 + receiveBuffer[36]);
-                    _Turbines[_turbineID].Temp_BusBar = (short)(receiveBuffer[37] * 256 + receiveBuffer[38]);
-                    _Turbines[_turbineID].Temp_Spinner = (short)(receiveBuffer[39] * 256 + receiveBuffer[40]);
-                    _Turbines[_turbineID].Temp_HVTransformerL1 = (short)(receiveBuffer[41] * 256 + receiveBuffer[42]);
-                    _Turbines[_turbineID].Temp_HVTransformerL2 = (short)(receiveBuffer[43] * 256 + receiveBuffer[44]);
-                    _Turbines[_turbineID].Temp_HVTransformerL3 = (short)(receiveBuffer[45] * 256 + receiveBuffer[46]);
-                    _Turbines[_turbineID].Temp_GeneratorBearing = (short)(receiveBuffer[47] * 256 + receiveBuffer[48]);
-                    _Turbines[_turbineID].Temp_CoolWaterVCS = (short)(receiveBuffer[49] * 256 + receiveBuffer[50]);
+                    turbine.Temp_Hydraulic = (short)(receiveBuffer[17] * 256 + receiveBuffer[18]);
+                    turbine.Temp_Environment = (short)(receiveBuffer[19] * 256 + receiveBuffer[20]);
+                    turbine.Temp_Gear = (short)(receiveBuffer[21] * 256 + receiveBuffer[22]);
+                    turbine.Temp_Generator = (short)(receiveBuffer[23] * 256 + receiveBuffer[24]);
+                    turbine.Temp_SlipringVCS = (short)(receiveBuffer[25] * 256 + receiveBuffer[26]);
+                    turbine.Temp_GearBearing = (short)(receiveBuffer[27] * 256 + receiveBuffer[28]);
+                    turbine.Temp_HubController = (short)(receiveBuffer[29] * 256 + receiveBuffer[30]);
+                    turbine.Temp_Nacelle = (short)(receiveBuffer[31] * 256 + receiveBuffer[32]);
+                    turbine.Temp_TopController = (short)(receiveBuffer[35] * 256 + receiveBuffer[36]);
+                    turbine.Temp_BusBar = (short)(receiveBuffer[37] * 256 + receiveBuffer[38]);
+                    turbine.Temp_Spinner = (short)(receiveBuffer[39] * 256 + receiveBuffer[40]);
+                    turbine.Temp_HVTransformerL1 = (short)(receiveBuffer[41] * 256 + receiveBuffer[42]);
+                    turbine.Temp_HVTransformerL2 = (short)(receiveBuffer[43] * 256 + receiveBuffer[44]);
+                    turbine.Temp_HVTransformerL3 = (short)(receiveBuffer[45] * 256 + receiveBuffer[46]);
+                    turbine.Temp_GeneratorBearing = (short)(receiveBuffer[47] * 256 + receiveBuffer[48]);
+                    turbine.Temp_CoolWaterVCS = (short)(receiveBuffer[49] * 256 + receiveBuffer[50]);
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Temperature data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Temperature data - " + ex.Message);
                     return;
                 }
             }
@@ -714,14 +714,14 @@ namespace Eleon_SCADA.Park
 
                     //_Turbines[_turbineID].ActivePowerSetpoint = (short)(receiveBuffer[11] * 256 + receiveBuffer[12]);
                     //_Turbines[_turbineID].NominalPower = (short)(receiveBuffer[13] * 256 + receiveBuffer[14]);
-                    _Turbines[_turbineID].ActivePowerRegulatorSetpoint = (short)(receiveBuffer[11] * 256 + receiveBuffer[12]);
-                    _Turbines[_turbineID].ActivePowerSetpoint = (short)(receiveBuffer[13] * 256 + receiveBuffer[14]);
+                    turbine.ActivePowerRegulatorSetpoint = (short)(receiveBuffer[11] * 256 + receiveBuffer[12]);
+                    turbine.ActivePowerSetpoint = (short)(receiveBuffer[13] * 256 + receiveBuffer[14]);
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Power setpoint data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Power setpoint data - " + ex.Message);
                     return;
                 }
             }
@@ -739,15 +739,15 @@ namespace Eleon_SCADA.Park
 
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
-                    _Turbines[_turbineID].Production = (int)((receiveBuffer[29] << 24) + (receiveBuffer[30] << 16)
+                    turbine.Production = (int)((receiveBuffer[29] << 24) + (receiveBuffer[30] << 16)
                         + (receiveBuffer[31] << 8) + receiveBuffer[32]);
                     //_Turbines[_turbineID].Production = BitConverter.ToUInt32(receiveBuffer, 28);
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Production data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Production data - " + ex.Message);
                     return;
                 }
             }
@@ -765,13 +765,13 @@ namespace Eleon_SCADA.Park
 
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
-                    _Turbines[_turbineID].Reactive_Power = (int)(receiveBuffer[21] << 24) + (receiveBuffer[22] << 16) + (receiveBuffer[23] << 8) + receiveBuffer[24];
+                    turbine.Reactive_Power = (int)(receiveBuffer[21] << 24) + (receiveBuffer[22] << 16) + (receiveBuffer[23] << 8) + receiveBuffer[24];
                 }
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - VGMSOverview data - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - VGMSOverview data - " + ex.Message);
                     return;
                 }
             }
@@ -820,8 +820,8 @@ namespace Eleon_SCADA.Park
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Alarm Log - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Alarm Log - " + ex.Message);
                     throw new Exception(ex.Message);
                 }
             }
@@ -846,7 +846,7 @@ namespace Eleon_SCADA.Park
                     Extract_StateData(_turbineID, receiveBuffer[8], receiveBuffer[10]);
 
                     // check result
-                    if (_Turbines[_turbineID].CommandAccepted)
+                    if (turbine.CommandAccepted)
                     {
                         return;
                     }
@@ -858,8 +858,8 @@ namespace Eleon_SCADA.Park
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Send Command - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Send Command - " + ex.Message);
                     return;
                 }
             }
@@ -906,8 +906,8 @@ namespace Eleon_SCADA.Park
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Set power setpoint - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Set power setpoint - " + ex.Message);
                     return;
                 }
             }
@@ -963,8 +963,8 @@ namespace Eleon_SCADA.Park
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Set reactive power setpoint - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Set reactive power setpoint - " + ex.Message);
                     return;
                 }
             }
@@ -1025,8 +1025,8 @@ namespace Eleon_SCADA.Park
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Change parameter - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Change parameter - " + ex.Message);
                     throw new Exception(ex.Message);
                 }
             }
@@ -1072,8 +1072,8 @@ namespace Eleon_SCADA.Park
                 catch (Exception ex)
                 {
                     _Park.ParkComErrors++;
-                    _Turbines[_turbineID].TurbineComErrors++;
-                    ErrorLog.Add_WithTime(_Turbines[_turbineID].TurbineName + " - Read parameter - " + ex.Message);
+                    turbine.TurbineComErrors++;
+                    ErrorLog.Add_WithTime(turbine.TurbineName + " - Read parameter - " + ex.Message);
                     throw new Exception(ex.Message);
                 }
             }
@@ -2022,24 +2022,23 @@ namespace Eleon_SCADA.Park
         private void Extract_StateData(int _turbineID, byte state1, byte state2)
         {
             // extract State1 data
-            _Turbines[_turbineID].OperationState = state1 & 0x03;
-            _Turbines[_turbineID].PendOperationState = (state1 & 0x0C) >> 2;
-            _Turbines[_turbineID].ServiceState = Convert.ToBoolean(state1 & 0x10);
-            _Turbines[_turbineID].YawCW = Convert.ToBoolean(state1 & 0x20);
-            _Turbines[_turbineID].YawCCW = Convert.ToBoolean(state1 & 0x40);
-            _Turbines[_turbineID].CommandAccepted = Convert.ToBoolean(state1 & 0x80);
+            turbine.OperationState = state1 & 0x03;
+            turbine.PendOperationState = (state1 & 0x0C) >> 2;
+            turbine.ServiceState = Convert.ToBoolean(state1 & 0x10);
+            turbine.YawCW = Convert.ToBoolean(state1 & 0x20);
+            turbine.YawCCW = Convert.ToBoolean(state1 & 0x40);
+            turbine.CommandAccepted = Convert.ToBoolean(state1 & 0x80);
 
             // extract State2 data
-            _Turbines[_turbineID].RemoteControl = Convert.ToBoolean(state2 & 0x01);
-            _Turbines[_turbineID].YawState = (state2 & 0x06) >> 1;
-            _Turbines[_turbineID].TurbineAvailable = Convert.ToBoolean(state2 & 0x08);
-            _Turbines[_turbineID].VDF_Triggered = Convert.ToBoolean(state2 & 0x10);
-            _Turbines[_turbineID].LocalModeRequest = Convert.ToBoolean(state2 & 0x20);
-            _Turbines[_turbineID].G1_Connected = Convert.ToBoolean(state2 & 0x40);
-            _Turbines[_turbineID].G2_Connected = Convert.ToBoolean(state2 & 0x80);
-
+            turbine.RemoteControl = Convert.ToBoolean(state2 & 0x01);
+            turbine.YawState = (state2 & 0x06) >> 1;
+            turbine.TurbineAvailable = Convert.ToBoolean(state2 & 0x08);
+            turbine.VDF_Triggered = Convert.ToBoolean(state2 & 0x10);
+            turbine.LocalModeRequest = Convert.ToBoolean(state2 & 0x20);
+            turbine.G1_Connected = Convert.ToBoolean(state2 & 0x40);
+            turbine.G2_Connected = Convert.ToBoolean(state2 & 0x80);
             // update general Generator connection status
-            _Turbines[_turbineID].G_Connected = _Turbines[_turbineID].G1_Connected | _Turbines[_turbineID].G2_Connected;
+            turbine.G_Connected = turbine.G1_Connected | turbine.G2_Connected;
         }
 
         public byte[] ComputeCRC_16_bytes(byte[] val, int offset, int count)

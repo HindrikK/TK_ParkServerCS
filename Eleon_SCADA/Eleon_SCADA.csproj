@@ -143,7 +143,7 @@
     <Compile Include="MiscFunctions.cs" />
     <Compile Include="External_Interface\MarketInterfaceLog.cs" />
     <Compile Include="External_Interface\ModbusIntegration.cs" />
-    <Compile Include="External_Interface\VirtualTurbine.cs" />
+    <Compile Include="Park\WindTurbine.cs" />
     <Compile Include="External_Interface\IEC104_Interface.cs" />
     <Compile Include="Forms\Form_DataCharts.cs">
       <SubType>Form</SubType>
@@ -265,7 +265,7 @@
     <Compile Include="Databases\Database.cs" />
     <Compile Include="InteropServices.cs" />
     <Compile Include="Park\FrequencyController.cs" />
-    <Compile Include="Park\VestasController.cs" />
+    <Compile Include="Park\VestasRCS.cs" />
     <Compile Include="Forms\Form_Main.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -12,7 +12,7 @@ namespace Eleon_SCADA.Logging
     {
         public System.Threading.Thread myLogger;
         Park.WindPark _Park;
-        int[] Status;
+        int[] Status_Code_prev;
 
         public DataSet[] myDataSets;
         public OleDbConnection[] myAccessConnections;
@@ -24,10 +24,10 @@ namespace Eleon_SCADA.Logging
         public Databases(Park.WindPark _park)
         {
             _Park = _park;
-            Status = new int[_Park.NumOfTurbinesInPark + 1];
+            Status_Code_prev = new int[_Park.NumOfTurbinesInPark + 1];
             for (int i = 1; i <= _Park.NumOfTurbinesInPark; i++)
             {
-                Status[i] = _Park.myTurbines[i].State;
+                Status_Code_prev[i] = _Park.myTurbines[i].StatusCode;
             }
 
             myAccessConnections = new OleDbConnection[Eleon_SCADA.Program.myPark.NumOfTurbinesInPark + 1];
@@ -171,12 +171,12 @@ namespace Eleon_SCADA.Logging
                 {
                     for (int i = 1; i <= _Park.NumOfTurbinesInPark; i++)
                     {
-                        if (_Park.myTurbines[i].Error_Code != Status[i])
+                        if (_Park.myTurbines[i].StatusCode != Status_Code_prev[i])
                         {
-                            try { WriteStatus(i, _Park.myTurbines[i].Error_Code); }
+                            try { WriteStatus(i, _Park.myTurbines[i].StatusCode); }
                             catch { }
                         }
-                        Status[i] = _Park.myTurbines[i].Error_Code;
+                        Status_Code_prev[i] = _Park.myTurbines[i].StatusCode;
                     }
                 }
                 catch (Exception ex)
@@ -407,8 +407,8 @@ namespace Eleon_SCADA.Logging.TableAdapters
 
                     strAccessInsert = "INSERT INTO " + "Data_1" +
                         " ([Time], [WindSpeed], [ActivePower]) VALUES ('" + time +
-                        "','" + Program.myPark.myTurbines[_ID].Windspeed_1s +
-                        "', '" + Program.myPark.myTurbines[_ID].Active_Power + "')";
+                        "','" + Program.myPark.myTurbines[_ID].WindSpeed +
+                        "', '" + Program.myPark.myTurbines[_ID].ActivePower + "')";
                     myAccessCommand.CommandText = strAccessInsert;
                     myAccessCommand.ExecuteNonQuery();
                 }
@@ -778,9 +778,9 @@ namespace Eleon_SCADA.Logging.TableAdapters
 
                 strAccessInsert = "INSERT INTO " + "Data_2" +
                     " ([Time], [YawPosition], [Hours], [Production]) VALUES ('" + time +
-                    "', '" + Program.myPark.myTurbines[_ID].Nacelle_Direction +
-                    "', '" + Program.myPark.myTurbines[_ID].Hours +
-                    "', '" + Program.myPark.myTurbines[_ID].Production + "')";
+                    "', '" + Program.myPark.myTurbines[_ID].NacellePosition +
+                    "', '" + Program.myPark.myTurbines[_ID].TotalHours +
+                    "', '" + Program.myPark.myTurbines[_ID].TotalActiveProduction + "')";
                 myAccessCommand.CommandText = strAccessInsert;
                 myAccessCommand.ExecuteNonQuery();
             }

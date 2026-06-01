@@ -1,4 +1,5 @@
-﻿using System;
+using Eleon_SCADA.Park;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -20,9 +21,9 @@ namespace Eleon_SCADA.Forms
         // refresh data values on form
         private void timer1_Tick(object sender, EventArgs e)
         {
-            textBox_Errors_01.Text = Program.myPark.myTurbines[1].TurbineComErrors.ToString();
-            textBox_Tx_01.Text = Program.myPark.myTurbines[1].TurbineComTransmitted.ToString();
-            textBox_Rx_01.Text = Program.myPark.myTurbines[1].TurbineComReceived.ToString();
+            textBox_Errors_01.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).TurbineComErrors.ToString();
+            textBox_Tx_01.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).TurbineComTransmitted.ToString();
+            textBox_Rx_01.Text = ((VestasTurbine)Program.myPark.myTurbines[1]).TurbineComReceived.ToString();
         }
 
         // reset all counters
@@ -37,9 +38,9 @@ namespace Eleon_SCADA.Forms
                     Program.myPark.ParkComTransmitted = 0;
                     Program.myPark.ParkComReceived = 0;
 
-                    Program.myPark.myTurbines[i].TurbineComErrors = 0;
-                    Program.myPark.myTurbines[i].TurbineComTransmitted = 0;
-                    Program.myPark.myTurbines[i].TurbineComReceived = 0;
+                    ((VestasTurbine)Program.myPark.myTurbines[i]).TurbineComErrors = 0;
+                    ((VestasTurbine)Program.myPark.myTurbines[i]).TurbineComTransmitted = 0;
+                    ((VestasTurbine)Program.myPark.myTurbines[i]).TurbineComReceived = 0;
                 }
             }
         }

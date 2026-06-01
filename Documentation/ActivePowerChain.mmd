@@ -34,8 +34,9 @@ flowchart TD
     end
 
     subgraph TurbineObject_T01["Turbine T01"]
-        Turbine_T01["Set_PowerSetpoint()"]
-        VestasController["Set_ActivePowerSetpoint()"]
+        Turbine_T01["WindTurbine.Set_PowerSetpoint()"]
+        VestasTurbine["VestasTurbine override"]
+        VestasRCS["VestasRCS.Set_ActivePowerSetpoint()"]
         TurbineController["Turbine controller"]
     end
 
@@ -74,8 +75,9 @@ flowchart TD
     Clamp --> SetActivePower
 
     SetActivePower --> Turbine_T01
-    MainDirectSetpoint --> VestasController
-    Turbine_T01 --> VestasController
-    VestasController --> TurbineController
+    MainDirectSetpoint --> Turbine_T01
+    Turbine_T01 --> VestasTurbine
+    VestasTurbine --> VestasRCS
+    VestasRCS --> TurbineController
 
     TurbineController -->|"RCS protocol"| Turbine

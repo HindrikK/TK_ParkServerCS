@@ -1,4 +1,5 @@
-﻿using System;
+using Eleon_SCADA.Park;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -330,7 +331,7 @@ namespace Eleon_SCADA.Forms
         {
             //SetpointTimer.Stop();
 
-            if (Program.myPark.myTurbines[1].ActivePowerSetpoint != ActivePowerSetpoint && Program.myPark.myTurbines[1].G_Connected)     // if value changed and turbine connected
+            if (((VestasTurbine)Program.myPark.myTurbines[1]).ActivePowerSetpoint != ActivePowerSetpoint && ((VestasTurbine)Program.myPark.myTurbines[1]).G_Connected)     // if value changed and turbine connected
             {
                 Program.myPark.myTurbines[1].Set_PowerSetpoint((short)ActivePowerSetpoint);
             }
@@ -354,7 +355,7 @@ namespace Eleon_SCADA.Forms
             }
             else    // get frequency from real turbine
             {
-                Frequency = Program.myPark.myTurbines[1].Frequency;
+                Frequency = ((VestasTurbine)Program.myPark.myTurbines[1]).Frequency;
 
                 if (Frequency * 100 < trackBar_Frequency.Minimum)
                 {
@@ -403,7 +404,7 @@ namespace Eleon_SCADA.Forms
             }
             else
             {
-                Windspeed = Program.myPark.myTurbines[1].Windspeed;
+                Windspeed = Program.myPark.myTurbines[1].WindSpeed;
                 trackBar_Windspeed.Value = (int)(Windspeed * 10);
             }
 
