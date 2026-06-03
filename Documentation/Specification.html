@@ -42,7 +42,7 @@ strong { color: #20384f; }
 </ol>
 <p>user and schedules automatic shutdown after 60 seconds.</p>
 <ol>
-<li>Loads settings from <code>%APPDATA%\Troonik\Settings.xml</code>.</li>
+<li>Loads settings from <code>%APPDATA%\TK_ParkServer\Settings.xml</code>.</li>
 <li>Loads <code>PowerCurve_V80.txt</code>.</li>
 <li>Creates the wind park and adds one <code>Vestas V80</code> turbine (<code>T01</code>) as a</li>
 </ol>
@@ -63,8 +63,8 @@ strong { color: #20384f; }
 </ol>
 <p>On application exit, the Market Interface server is stopped and the memory-mapped interop service is disposed.</p>
 <h2><strong>Application Settings</strong></h2>
-<p>Settings are read from <code>%APPDATA%\Troonik\Settings.xml</code>.</p>
-<p>The AppData folder path is supplied by Windows. During settings load the application ensures that the <code>%APPDATA%\Troonik</code> directory exists. If <code>Settings.xml</code> is missing, the application creates it with a <code>Settings</code> root element and then writes all declared default parameters into the file. If a known settings section or parameter is missing, the application adds it with the current in-code default value and saves the repaired XML file. If a parameter exists but cannot be converted to the expected type, loading fails with an error message so the user can manually correct the value.</p>
+<p>Settings are read from <code>%APPDATA%\TK_ParkServer\Settings.xml</code>.</p>
+<p>The AppData folder path is supplied by Windows. During settings load the application ensures that the <code>%APPDATA%\TK_ParkServer</code> directory exists. If <code>Settings.xml</code> is missing, the application creates it with a <code>Settings</code> root element and then writes all declared default parameters into the file. If a known settings section or parameter is missing, the application adds it with the current in-code default value and saves the repaired XML file. If a parameter exists but cannot be converted to the expected type, loading fails with an error message so the user can manually correct the value.</p>
 <p>An existing XML file must use <code>Settings</code> as its root element. A file with a different root element is treated as invalid rather than overwritten.</p>
 <p>Settings are grouped into these sections:</p>
 <table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
@@ -371,10 +371,12 @@ strong { color: #20384f; }
 </tbody></table>
 <h2><strong>Market Interface</strong></h2>
 <h3><strong>Functionality</strong></h3>
-<p>Market interface is created during application startup when a valid license is present.&lt;br&gt; It is started when <code>Settings.MarketInterface.MarketIfEnable</code> is <code>true</code>.&lt;br&gt; It is stopped when <code>Settings.MarketInterface.MarketIfEnable</code> is <code>false</code> and also during application shutdown.&lt;br&gt; The Tools menu contains a Market Interface dialog (<code>Form_MarketInterface</code>) for editing the settings and starting or stopping the server at runtime, plus a status dialog showing active connections.</p>
+<p>Market interface is created during application startup when a valid license is present.</p>
+<p>It is started when <code>Settings.MarketInterface.MarketIfEnable</code> is <code>true</code>. It is stopped when <code>Settings.MarketInterface.MarketIfEnable</code> is <code>false</code> and also during application shutdown.</p>
+<p>Tools menu contains a Market Interface dialog (<code>Form_MarketInterface</code>) for editing the settings and starting or stopping the server at runtime, plus a status dialog showing active connections.</p>
 <p>Control includes only active power setpoint. Market interface has active power setpoint <code>Market_ActivePowerSetpoint</code> which is updated from the Modbus register. But in case the market interface is offline/down for more than <code>Settings.MarketInterface.FallbackTimeout</code>, <code>Market_ActivePowerSetpoint</code> will revert to park max power value so that park won't be limited indefinetly when interface is down. Market limit will also be reverted when interface is disabled.</p>
 <h3><strong>Interface Protocol</strong></h3>
-<p>The Market Interface is implemented as a Modbus TCP/UDP server integration based on the <code>TQ_ModbusServerCS</code> .NET Framework 4.8 submodule.</p>
+<p>The Market Interface is implemented as a Modbus TCP/UDP server integration based on the <code>TK_ModbusServerCS</code> .NET Framework 4.8 submodule.</p>
 <p>The Modbus library supports:</p>
 <ul>
 <li>TCP and UDP listeners.</li>
@@ -391,36 +393,38 @@ strong { color: #20384f; }
 <li>Unique and non-overlapping register blocks.</li>
 </ul>
 <h4><strong>Registers Table</strong></h4>
-<table><thead><tr><th></th><th style="text-align:right">Adr</th><th>&amp;nbsp;&amp;nbsp;&amp;nbsp;Name</th><th style="text-align:center">Reg. Type</th><th style="text-align:center">Access</th><th style="text-align:center">Value&lt;br&gt;type</th><th style="text-align:center">Unit</th><th style="text-align:center">Decimal&lt;br&gt;step</th><th style="text-align:right">Default</th><th style="text-align:right">Min</th><th style="text-align:right">Max</th></tr></thead><tbody>
+<table><thead><tr><th></th><th style="text-align:center">Adr</th><th style="text-align:center">Name</th><th style="text-align:center">Reg. Type</th><th style="text-align:center">Access</th><th style="text-align:center">Value type</th><th style="text-align:center">Unit</th><th style="text-align:center">Decimal step</th><th style="text-align:center">Default</th><th style="text-align:center">Min</th><th style="text-align:center">Max</th></tr></thead><tbody>
 <tr><td></td><td style="text-align:right"></td><td></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
-<tr><td>1</td><td style="text-align:right">100</td><td>Active Power SP (MW)</td><td style="text-align:center">HR</td><td style="text-align:center">R/W</td><td style="text-align:center">uint16</td><td style="text-align:center">MW</td><td style="text-align:center">0.1</td><td style="text-align:right">1.8</td><td style="text-align:right">0</td><td style="text-align:right">1.8</td></tr>
-<tr><td>2</td><td style="text-align:right">101</td><td>Active Power SP (pct)</td><td style="text-align:center">HR</td><td style="text-align:center">R/W</td><td style="text-align:center">uint16</td><td style="text-align:center">%</td><td style="text-align:center">0.1</td><td style="text-align:right">100</td><td style="text-align:right">0</td><td style="text-align:right">100</td></tr>
+<tr><td>1</td><td style="text-align:right">100</td><td>Market Active Power SP (MW)</td><td style="text-align:center">HR</td><td style="text-align:center">R/W</td><td style="text-align:center">uint16</td><td style="text-align:center">MW</td><td style="text-align:center">0.1</td><td style="text-align:right">ActivePowerMax</td><td style="text-align:right">0</td><td style="text-align:right">ActivePowerMax</td></tr>
+<tr><td>2</td><td style="text-align:right">101</td><td>Market Active Power SP (pct)</td><td style="text-align:center">HR</td><td style="text-align:center">R/W</td><td style="text-align:center">uint16</td><td style="text-align:center">%</td><td style="text-align:center">0.1</td><td style="text-align:right">100.0</td><td style="text-align:right">0</td><td style="text-align:right">100.0</td></tr>
 <tr><td></td><td style="text-align:right"></td><td></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
 <tr><td>3</td><td style="text-align:right">500</td><td>Park Status</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">binary</td><td style="text-align:center">-</td><td style="text-align:right">0</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
 <tr><td>4</td><td style="text-align:right">501</td><td>Park Active Power</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">int16</td><td style="text-align:center">MW</td><td style="text-align:center">0.1</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td style="text-align:right">-</td></tr>
 <tr><td>5</td><td style="text-align:right">502</td><td>Park Wind Speed</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">m/s</td><td style="text-align:center">0.1</td><td style="text-align:right">-</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
 <tr><td></td><td style="text-align:right"></td><td></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
 <tr><td>6</td><td style="text-align:right">1000</td><td>Turbine #1 Status</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">bitfield</td><td style="text-align:center">-</td><td style="text-align:right">0</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
-<tr><td>7</td><td style="text-align:right">1001</td><td>Turbine #1 Active Power</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">int16</td><td style="text-align:center">kW</td><td style="text-align:center">0</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td style="text-align:right">-</td></tr>
+<tr><td>7</td><td style="text-align:right">1001</td><td>Turbine #1 Active Power</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">int16</td><td style="text-align:center">kW</td><td style="text-align:center">1</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td style="text-align:right">-</td></tr>
 <tr><td>8</td><td style="text-align:right">1002</td><td>Turbine #1 Wind Speed</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">m/s</td><td style="text-align:center">0.1</td><td style="text-align:right">-</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
 </tbody></table>
 <p>Notes:</p>
 <ul>
 <li>Park status register 500 is a placeholder and is currently not implemented.</li>
 <li>Turbine status register 1000 returns <code>WindTurbine.Status</code> for <code>T01</code>.</li>
-<li>Park active power can be controlled either by register 100 or 101. Writing either one will also automatically adjust the other.</li>
+<li>Registers 100 and 101 are two views of the same <code>WindPark.Market_ActivePowerSetpoint</code>. Register 100 reads/writes 0.1 MW steps. Register 101 reads/writes 0.1 percent steps of the current park maximum. Writes are clamped to <code>0..ActivePowerMax</code>.</li>
 </ul>
-<p>&lt;u&gt;Turbine status bitfield:&lt;/u&gt;</p>
+<p><u>Turbine status bitfield:</u></p>
 <table><thead><tr><th style="text-align:right">Bit</th><th>Meaning</th></tr></thead><tbody>
-<tr><td style="text-align:right">0</td><td>Stopped</td></tr>
-<tr><td style="text-align:right">1</td><td>Grid connected</td></tr>
-<tr><td style="text-align:right">2</td><td>Service mode</td></tr>
-<tr><td style="text-align:right">4</td><td>Error</td></tr>
-<tr><td style="text-align:right">5</td><td>Remote control</td></tr>
-<tr><td style="text-align:right">6</td><td>Low wind</td></tr>
+<tr><td style="text-align:right">0</td><td>Online / communicating</td></tr>
+<tr><td style="text-align:right">1</td><td>Remote control available</td></tr>
+<tr><td style="text-align:right">2</td><td>Stopped</td></tr>
+<tr><td style="text-align:right">3</td><td>Grid connected</td></tr>
+<tr><td style="text-align:right">4</td><td>Service mode</td></tr>
+<tr><td style="text-align:right">5</td><td>Reserved for warning</td></tr>
+<tr><td style="text-align:right">6</td><td>Error</td></tr>
+<tr><td style="text-align:right">7</td><td>Low wind</td></tr>
 </tbody></table>
 <h3>Market Interface Logs</h3>
-<p>Interface events will be logged in a dedicated Market Interface log. Every log entry consists timestamp (<code>MM.dd HH:mm:ss</code>) and description. Logs are accessible from a separate form accessed through Market Interface settings form. Log window is refreshed automatically to show logs in realtime.&lt;br&gt; Maximum log size is last 1000 logs, older logs will be overwritten. Realtime logging will be handled in volatile memory (RAM).&lt;br&gt; When unsaved logs exist then every 10 min or when program exits, the logs will be saved in a CSV file in "logs" folder inside program folder. If the logs folder does not exist then it will be created. Filename template is <code>MarketLog_YYMMDD_hhmmss.csv</code>. Filename includes timestamp of first log in file. When program starts, existing logs will be loaded from the latest file. Maximum size of the log file is one month or 1000 logs (same as log in memory). When maximum log or file size is reached a new file will be created.</p>
+<p>Interface events will be logged in a dedicated Market Interface log. Every log entry consists timestamp (<code>MM.dd HH:mm:ss</code>) and description. Logs are accessible from a separate form accessed through Market Interface settings form. Log window is refreshed automatically to show logs in realtime. Maximum log size is last 1000 logs, older logs will be overwritten. Realtime logging will be handled in volatile memory (RAM). When unsaved logs exist then every 10 min or when program exits, the logs will be saved in a CSV file in "logs" folder inside program folder. If the logs folder does not exist then it will be created. Filename template is <code>MarketLog_YYMMDD_hhmmss.csv</code>. Filename includes timestamp of first log in file. When program starts, existing logs will be loaded from the latest file. Maximum size of the log file is one month or 1000 logs (same as log in memory). When maximum log or file size is reached a new file will be created.</p>
 <p>These are the events that will be logged:</p>
 <ul>
 <li>Interface manual enable/disable</li>
@@ -526,7 +530,7 @@ strong { color: #20384f; }
 <tr><td><code>Dialog_VestasPowerControl</code></td><td>Vestas-related control workflow</td><td>Vestas power control dialog retained in the project.</td></tr>
 </tbody></table>
 <h3><strong>Operator confirmations and error handling</strong></h3>
-<p>Potentially disruptive operator actions use confirmation dialogs: disconnecting the turbine, stopping the TSO interface, starting the park and stopping the park.&lt;br&gt; Exceptions raised from menu actions and refresh functions are shown with modal message boxes containing the exception message and the source context.</p>
+<p>Potentially disruptive operator actions use confirmation dialogs: disconnecting the turbine, stopping the TSO interface, starting the park and stopping the park. Exceptions raised from menu actions and refresh functions are shown with modal message boxes containing the exception message and the source context.</p>
 </main>
 </body>
 </html>
