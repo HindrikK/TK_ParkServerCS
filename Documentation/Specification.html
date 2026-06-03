@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TK Park Server Specification</title>
+<style>
+:root { color-scheme: light; --text:#1f2933; --muted:#5b6773; --line:#d7dde4; --soft:#f5f7fa; --accent:#245789; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; line-height: 1.55; color: var(--text); background: #ffffff; }
+main { max-width: 1080px; margin: 0 auto; padding: 40px 28px 64px; }
+h1 { margin: 0 0 20px; font-size: 2.25rem; color: var(--accent); }
+h2 { margin-top: 34px; padding-bottom: 6px; border-bottom: 1px solid var(--line); color: var(--accent); }
+h3 { margin-top: 26px; color: #2f4f6f; }
+h4, h5, h6 { margin-top: 20px; color: #364f68; }
+p { margin: 12px 0; }
+ul, ol { margin: 10px 0 16px 26px; padding: 0; }
+li { margin: 5px 0; }
+code { font-family: Consolas, "Courier New", monospace; background: var(--soft); border: 1px solid #e4e8ee; border-radius: 4px; padding: 1px 4px; }
+pre { overflow-x: auto; background: #17212b; color: #e8eef5; padding: 14px 16px; border-radius: 6px; }
+pre code { background: transparent; border: 0; padding: 0; color: inherit; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.95rem; }
+th, td { border: 1px solid var(--line); padding: 7px 9px; vertical-align: top; }
+th { background: var(--soft); text-align: left; }
+tr:nth-child(even) td { background: #fbfcfd; }
+strong { color: #20384f; }
+@media (max-width: 720px) { main { padding: 24px 16px 44px; } table { display:block; overflow-x:auto; } h1 { font-size: 1.8rem; } }
+</style>
+</head>
+<body>
+<main>
+<h1>TK Park Server</h1>
+<p>Framework version: .NET Framework 4.8; Windows Forms desktop application.</p>
+<h2><strong>Overview</strong></h2>
+<p>TK Park Server is a Windows Forms supervisory application for a wind park. The current application startup creates one Vestas V80 turbine, named <code>T01</code>, and uses that turbine as the active park model. The application monitors turbine state, electrical values, wind speed, production data, communication status. Application has modules for alarm announcements, data logging and IEC 60870-5-104 server integration.</p>
+<p>The application is single-instance. Startup is blocked if another process owns the <code>TK_Park_Server</code> mutex.</p>
+<h2><strong>Runtime Startup</strong></h2>
+<p>At startup the application performs the following sequence:</p>
+<ol>
+<li>Shows the startup form.</li>
+<li>Checks the license. If the license check fails, the application warns the</li>
+</ol>
+<p>user and schedules automatic shutdown after 60 seconds.</p>
+<ol>
+<li>Loads settings from <code>%APPDATA%\Troonik\Settings.xml</code>.</li>
+<li>Loads <code>PowerCurve_V80.txt</code>.</li>
+<li>Creates the wind park and adds one <code>Vestas V80</code> turbine (<code>T01</code>) as a</li>
+</ol>
+<p><code>VestasTurbine</code> stored through the generic <code>WindTurbine</code> park model.</p>
+<ol>
+<li>Creates the Vestas RCS serial controller and assigns it to the Vestas</li>
+</ol>
+<p>turbine wrapper.</p>
+<ol>
+<li>Creates and starts alarm dispatch.</li>
+<li>Creates the IEC-104 server and IEC-104 interface mapper.</li>
+<li>Creates and starts the Market Interface server when enabled in settings.</li>
+<li>Creates the memory-mapped interop service.</li>
+<li>Opens Access database connections and starts database logging.</li>
+<li>Auto-connects the park serial controller when enabled in settings.</li>
+<li>Auto-starts the IEC-104 server when enabled in settings.</li>
+<li>Opens the main form.</li>
+</ol>
+<p>On application exit, the Market Interface server is stopped and the memory-mapped interop service is disposed.</p>
+<h2><strong>Application Settings</strong></h2>
+<p>Settings are read from <code>%APPDATA%\Troonik\Settings.xml</code>.</p>
+<p>The AppData folder path is supplied by Windows. During settings load the application ensures that the <code>%APPDATA%\Troonik</code> directory exists. If <code>Settings.xml</code> is missing, the application creates it with a <code>Settings</code> root element and then writes all declared default parameters into the file. If a known settings section or parameter is missing, the application adds it with the current in-code default value and saves the repaired XML file. If a parameter exists but cannot be converted to the expected type, loading fails with an error message so the user can manually correct the value.</p>
+<p>An existing XML file must use <code>Settings</code> as its root element. A file with a different root element is treated as invalid rather than overwritten.</p>
+<p>Settings are grouped into these sections:</p>
+<table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>AlarmDispatch</code></td><td>SMTP server, sender, default recipient, trigger delay, active recipients and excluded status codes.</td></tr>
+<tr><td><code>Application</code></td><td>Auto-connect park, auto-start IEC-104 and auto-logout time.</td></tr>
+<tr><td><code>Database</code></td><td>Access database folder path and fast sample time.</td></tr>
+<tr><td><code>VestasDriver</code></td><td>Serial port, baud rate, polling intervals, parity and communication timeouts.</td></tr>
+<tr><td><code>IEC104Server</code></td><td>IP address, TCP port, periodic transmission settings, max clients, reconnect delay and ASDU.</td></tr>
+<tr><td><code>Park</code></td><td>Local, TSO and market active power setpoints, park maximum power, breaker status and setpoint mode.</td></tr>
+<tr><td><code>T01</code></td><td>Turbine-specific primary regulation parameters and automatic error acknowledge list.</td></tr>
+<tr><td><code>MarketInterface</code></td><td>Market Interface Modbus TCP/UDP enable state, bind address, ports, connection limits and rate/timeouts.</td></tr>
+</tbody></table>
+<p>Default values declared in code include:</p>
+<table><thead><tr><th>Setting</th><th>Default</th></tr></thead><tbody>
+<tr><td>Application auto-connect park</td><td><code>true</code></td></tr>
+<tr><td>Application auto-start IEC-104</td><td><code>true</code></td></tr>
+<tr><td>Auto logout</td><td><code>600 s</code></td></tr>
+<tr><td>Database path</td><td><code>Database\</code></td></tr>
+<tr><td>Database sample time</td><td><code>60000 ms</code></td></tr>
+<tr><td>Vestas serial port</td><td><code>COM1</code></td></tr>
+<tr><td>Vestas baud rate</td><td><code>9600</code></td></tr>
+<tr><td>Vestas fast poll</td><td><code>500 ms</code></td></tr>
+<tr><td>Vestas slow poll</td><td><code>1000 ms</code></td></tr>
+<tr><td>Vestas communication timeout</td><td><code>200 ms</code></td></tr>
+<tr><td>Vestas communication status timeout</td><td><code>3500 ms</code></td></tr>
+<tr><td>IEC-104 server IP</td><td><code>0.0.0.0</code></td></tr>
+<tr><td>IEC-104 server port</td><td><code>2404</code></td></tr>
+<tr><td>IEC-104 max clients</td><td><code>10</code></td></tr>
+<tr><td>IEC-104 reconnect delay</td><td><code>20 s</code></td></tr>
+<tr><td>IEC-104 ASDU</td><td><code>3</code></td></tr>
+<tr><td>Park maximum power</td><td><code>2000 kW</code></td></tr>
+<tr><td>Local active power setpoint</td><td><code>2000 kW</code></td></tr>
+<tr><td>TSO active power setpoint</td><td><code>2000 kW</code></td></tr>
+<tr><td>Market active power setpoint</td><td><code>2000 kW</code></td></tr>
+<tr><td>T01 nominal power</td><td><code>2000 kW</code></td></tr>
+<tr><td>T01 power ramping</td><td><code>100</code></td></tr>
+<tr><td>T01 nominal frequency</td><td><code>50 Hz</code></td></tr>
+<tr><td>T01 primary regulation emergency reset delay</td><td><code>600 s</code></td></tr>
+<tr><td>T01 setpoint send rate</td><td><code>2 s</code></td></tr>
+<tr><td>T01 automatic error acknowledge delay</td><td><code>20 s</code></td></tr>
+<tr><td>Market Interface enabled</td><td><code>false</code></td></tr>
+<tr><td>Market Interface bind IP</td><td><code>0.0.0.0</code></td></tr>
+<tr><td>Market Interface TCP port</td><td><code>502</code></td></tr>
+<tr><td>Market Interface UDP port</td><td><code>502</code></td></tr>
+<tr><td>Market Interface TCP enabled</td><td><code>true</code></td></tr>
+<tr><td>Market Interface UDP enabled</td><td><code>true</code></td></tr>
+<tr><td>Market Interface maximum active connections</td><td><code>3</code></td></tr>
+<tr><td>Market Interface stale connection timeout</td><td><code>60 s</code></td></tr>
+<tr><td>Market Interface response rate limit</td><td><code>100 ms</code></td></tr>
+<tr><td>Market Interface fallback timeout</td><td><code>900 s</code> / 15 minutes</td></tr>
+</tbody></table>
+<p>Recipient lists, excluded alarm status lists and automatic error acknowledge lists are stored as Base64-encoded <code>BinaryFormatter</code> payloads in the XML.</p>
+<h2><strong>Licensing</strong></h2>
+<p>The application uses a local file-based license check. License data is read from <code>License.dat</code> in the application working directory.</p>
+<p><code>License.dat</code> is expected to contain three lines:</p>
+<table><thead><tr><th>Line</th><th>Value</th></tr></thead><tbody>
+<tr><td><code>1</code></td><td>License owner.</td></tr>
+<tr><td><code>2</code></td><td>License number.</td></tr>
+<tr><td><code>3</code></td><td>License hash.</td></tr>
+</tbody></table>
+<p>The license check reads the current hardware ID from the first <code>win32_processor</code> WMI <code>processorID</code> value. A license is considered valid when the stored license hash matches the SHA-256 based hash generated from:</p>
+<pre><code class="language-text">
+&lt;HardwareID&gt;&lt;LicenseOwner&gt;&lt;LicenseNumber&gt;
+</code></pre>
+<p>The hash calculation appends the in-code salt before hashing, encodes the input as Unicode, calculates a SHA-256 hash and stores the result as Base64.</p>
+<p>Licensing behavior:</p>
+<ul>
+<li>Startup calls <code>Licensing.CheckLicense()</code> before loading settings.</li>
+<li>If no valid license is found, the application shows a warning that some</li>
+</ul>
+<p>functionality has been disabled and starts a 60-second shutdown timer.</p>
+<ul>
+<li>When the no-license timer elapses, the main form closing confirmation is</li>
+</ul>
+<p>disabled and the application exits.</p>
+<ul>
+<li>The IEC-104 server refuses to start without a valid license.</li>
+<li>The Vestas serial controller refuses to open its communication port without</li>
+</ul>
+<p>a valid license.</p>
+<ul>
+<li>The Market Interface server refuses to start without a valid license.</li>
+<li>The License dialog shows the hardware ID. When a valid license exists, it</li>
+</ul>
+<p>also shows the license owner and license number; otherwise the license information group is hidden.</p>
+<h2><strong>User Access Levels</strong></h2>
+<p>The main form supports four user levels:</p>
+<table><thead><tr><th>Level</th><th>Name</th><th>Enabled functionality</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td>Logged out</td><td>Monitoring only. Control, service and debug functions are hidden or disabled.</td></tr>
+<tr><td><code>1</code></td><td>Administrator</td><td>Enables the turbine control menu and control tab when turbine communication is available.</td></tr>
+<tr><td><code>2</code></td><td>Service</td><td>Includes administrator access and enables service controls.</td></tr>
+<tr><td><code>10</code></td><td>Developer</td><td>Includes service access and adds the developer/debug menu.</td></tr>
+</tbody></table>
+<p>Login credentials are currently hard-coded in the main form source. The auto-logout timer is reloaded from settings after login and logs the user out when it elapses.</p>
+<h2><strong>Main User Interface</strong></h2>
+<p>The main form refreshes display values with fast and slow timers.</p>
+<p>Fast refresh updates:</p>
+<ul>
+<li>Park active power and wind speed.</li>
+<li>T01 power, wind speed, pitch angle, generator RPM, state and error code.</li>
+<li>T01 operation and pending operation states.</li>
+<li>Electrical values: active power, cos phi, frequency, phase voltages and</li>
+</ul>
+<p>phase currents.</p>
+<p>Slow refresh updates:</p>
+<ul>
+<li>Park production.</li>
+<li>T01 service, yaw, remote-control, availability and generator connection</li>
+</ul>
+<p>status.</p>
+<ul>
+<li>Turbine communication state and tab coloring.</li>
+<li>Human-readable state, error, operation and yaw texts.</li>
+<li>Active/reactive power setpoints.</li>
+<li>Setpoint mode display: no setpoint, local setpoint or remote setpoint.</li>
+<li>Database and IEC-104 server status labels.</li>
+</ul>
+<p>Available dialogs and tools include preferences, database settings, IEC-104 server settings, IEC-104 interface, Market Interface settings/status, alarm dispatch, turbine settings, park settings, turbine communication, communication statistics, communication terminal/logs, data charts, production view, error logs, Vestas parameter tool, license dialog, about dialog and developer/debug form.</p>
+<h2><strong>Wind Park Model</strong></h2>
+<p>The park model stores turbines through the generic <code>WindTurbine</code> abstraction. The current application creates one active turbine, <code>T01</code>, implemented as a <code>VestasTurbine</code>, and calculates park aggregate values from it. The park update timer runs every <code>100 ms</code>.</p>
+<p>Park-level monitored values include:</p>
+<ul>
+<li>Wind speed and wind direction.</li>
+<li>Active and reactive power.</li>
+<li>Voltage and current.</li>
+<li>Grid-connected state.</li>
+<li>Communication statistics: transmitted frames, received frames and errors.</li>
+</ul>
+<p>Park-level controls include:</p>
+<ul>
+<li>Start park.</li>
+<li>Stop park. In the current Vestas turbine wrapper this maps to pause turbine, because Vestas does not have "Stop" command.</li>
+<li>Active power setpoint dispatch.</li>
+</ul>
+<p>Park control commands are dispatched through virtual command methods on <code>WindTurbine</code>: <code>Start_Turbine</code>, <code>Stop_Turbine</code>, <code>Set_PowerSetpoint</code> and <code>Reset_Turbine</code>. Turbine-specific subclasses implement the actual communication behavior.</p>
+<p>Active power setpoint handling:</p>
+<ul>
+<li>The park has a maximum active power limit setting.</li>
+<li>All active setpoints are clamped to the maximum active power.</li>
+<li>Active power setpoint control has different modes.</li>
+<li>Setpoint mode <code>0</code> - automatic, takes smallest of all setpoints.</li>
+<li>Setpoint mode <code>1</code> - local, configured in the application.</li>
+<li>Setpoint mode <code>2</code> - TSO interface.</li>
+<li>Setpoint mode <code>3</code> - market interface.</li>
+<li>All setpoints are persisted to settings so that it can recover after application restart.</li>
+</ul>
+<h2><strong>Turbine Model</strong></h2>
+<p><code>WindTurbine</code> is the generic turbine abstraction used by the park, database, alarm and external interface code. It contains common turbine identity, measurement, status, statistics and control values. It also defines virtual command methods for start, stop, reset and active power setpoint commands.</p>
+<p><code>VestasTurbine</code> derives from <code>WindTurbine</code> and adapts the Vestas-specific RCS communication data to the generic turbine model. Generic values such as active power, wind speed, status code, state, nacelle position, production and total hours are exposed through the base <code>WindTurbine</code> properties. Vestas-specific values remain available on <code>VestasTurbine</code> and are used by the Vestas-oriented forms and diagnostics.</p>
+<h2><strong>Vestas Turbine Model</strong></h2>
+<p>The turbine model stores the current values collected from the Vestas RCS controller. These include:</p>
+<ul>
+<li>Communication status and communication counters.</li>
+<li>Active power, generator RPM, rotor RPM, wind speed, pitch angle, state and</li>
+</ul>
+<p>error code.</p>
+<ul>
+<li>One-second wind data: wind speed, wind direction, relative wind direction and</li>
+</ul>
+<p>nacelle direction.</p>
+<ul>
+<li>One-second electrical data: active power, cos phi, frequency, phase voltages</li>
+</ul>
+<p>and phase currents.</p>
+<ul>
+<li>Operation state, pending operation state, service state, yaw state, command</li>
+</ul>
+<p>accepted state and remote-control availability.</p>
+<ul>
+<li>Turbine availability, VDF trigger, local mode request and generator</li>
+</ul>
+<p>connection states.</p>
+<ul>
+<li>Temperature values for hydraulic system, environment, gear, generator,</li>
+</ul>
+<p>slipring, bearings, hub, nacelle, top controller, busbar, spinner, transformers and cooling water.</p>
+<ul>
+<li>Active power setpoint, reactive power setpoint, nominal power and active power</li>
+</ul>
+<p>regulator setpoint.</p>
+<ul>
+<li>Production hours, production and reactive power.</li>
+</ul>
+<p>The turbine wrapper overrides the generic <code>WindTurbine</code> command methods for active power setpoint, start, stop/pause and reset operations. These commands use the local <code>VestasRCS</code> reference assigned to the turbine wrapper, so the wrapper does not depend on where the controller is stored globally.</p>
+<h2><strong>Vestas RCS Serial Controller</strong></h2>
+<p><code>VestasRCS</code> runs a background thread and communicates with the turbine through a serial port. During construction it receives the <code>WindPark</code> and the concrete <code>VestasTurbine</code> it controls, then assigns itself to the turbine wrapper so Vestas command overrides can call the controller directly. It uses timers for:</p>
+<ul>
+<li>Communication status timeout per turbine.</li>
+<li>Fast polling.</li>
+<li>Slow polling.</li>
+<li>Ten-second polling.</li>
+<li>Request timeout.</li>
+<li>Automatic error acknowledge delay.</li>
+</ul>
+<p>When the port is opened, polling intervals and communication timeouts are loaded from settings. <code>VestasRCS</code> polls overview data, wind data, electrical data, temperature data, power setpoint data, production data and VGMS overview data.</p>
+<p>Supported controller actions include:</p>
+<ul>
+<li>Start turbine.</li>
+<li>Pause turbine.</li>
+<li>Acknowledge errors.</li>
+<li>Set active power setpoint.</li>
+<li>Set reactive power setpoint.</li>
+<li>Change turbine parameters.</li>
+</ul>
+<p>Automatic error acknowledgement checks the configured <code>T01.AutoResetError</code> status list and uses <code>T01.AutoErrorAckDelay</code> before sending reset/start related commands.</p>
+<h2><strong>Database Logging</strong></h2>
+<p>Database logging uses Microsoft Jet OLE DB 4.0 and one Access <code>.mdb</code> file per turbine. The connection path is:</p>
+<pre><code class="language-text">
+&lt;Database.Path&gt;\&lt;TurbineName&gt;.mdb
+</code></pre>
+<p>For the current park this resolves to the configured database path plus <code>T01.mdb</code>.</p>
+<p>Logging starts only when all database connections open successfully. The database logger runs in a background thread and starts three timers:</p>
+<table><thead><tr><th>Timer</th><th>Interval</th><th>Action</th></tr></thead><tbody>
+<tr><td>Fast data</td><td><code>Database.SampleTime</code></td><td>Writes <code>Data_1</code> records when the Vestas port is open.</td></tr>
+<tr><td>Slow data</td><td><code>900000 ms</code> / 15 minutes</td><td>Writes <code>Data_2</code> records when the Vestas port is open.</td></tr>
+<tr><td>Status</td><td><code>500 ms</code></td><td>Detects error code changes and writes <code>Status</code> records.</td></tr>
+</tbody></table>
+<p>Logged records:</p>
+<table><thead><tr><th>Table</th><th>Fields written by application</th></tr></thead><tbody>
+<tr><td><code>Status</code></td><td><code>Time</code>, <code>Status</code></td></tr>
+<tr><td><code>Data_1</code></td><td><code>Time</code>, <code>WindSpeed</code>, <code>ActivePower</code></td></tr>
+<tr><td><code>Data_2</code></td><td><code>Time</code>, <code>YawPosition</code>, <code>Hours</code>, <code>Production</code></td></tr>
+</tbody></table>
+<p>Logging exceptions are announced by email to the default alarm dispatch address where possible.</p>
+<h2><strong>Alarm Announcement</strong></h2>
+<p>Alarm dispatch runs in a background thread and checks alarms once per second. It can be enabled and disabled at runtime from the main window.</p>
+<p>Alarm triggering behavior:</p>
+<ul>
+<li>A turbine status change can trigger an alarm.</li>
+<li>Loss of turbine communication can trigger an alarm.</li>
+<li>Triggering is delayed by the configured <code>AlarmDispatch.TriggerDelay</code>.</li>
+<li>Excluded status codes do not trigger alarm email.</li>
+<li>Alarm email is sent to active recipients.</li>
+</ul>
+<p>SMTP settings include server, port, timeout, subject and sender address.</p>
+<p>The alarm dispatcher also supports:</p>
+<ul>
+<li>Sending an announcement to all active recipients.</li>
+<li>Sending an announcement to a specific address.</li>
+<li>Sending a test alarm.</li>
+<li>Resending messages from the outbox.</li>
+<li>Clearing outbox and sent-message buffers.</li>
+</ul>
+<p>The outbox and sent-message buffers each keep up to 50 messages.</p>
+<h2><strong>TSO Interface</strong></h2>
+<p>TSO interface is implemented on IEC-104 server. It listens on the configured IP address and TCP port. It checks the license before starting and refuses start when the license is not valid.</p>
+<p>Server behavior:</p>
+<ul>
+<li>Uses one background listener thread.</li>
+<li>Creates one IEC-104 channel thread per accepted client.</li>
+<li>Limits clients by <code>IEC104Server.MaxNoOfClients</code>.</li>
+<li>Tracks server status as stopped, starting, error starting, waiting restart or</li>
+</ul>
+<p>running.</p>
+<ul>
+<li>On listener start failure, waits <code>IEC104Server.ReconnectTime</code> seconds before</li>
+</ul>
+<p>retrying.</p>
+<ul>
+<li>On stop, closes all active channels and stops the TCP listener.</li>
+</ul>
+<p>Configured IEC-104 settings:</p>
+<table><thead><tr><th>Setting</th><th>Default</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>ServerIP</code></td><td><code>0.0.0.0</code></td><td>Local IP address to bind.</td></tr>
+<tr><td><code>Port</code></td><td><code>2404</code></td><td>TCP listening port.</td></tr>
+<tr><td><code>MaxNoOfClients</code></td><td><code>10</code></td><td>Maximum simultaneously accepted clients/channels.</td></tr>
+<tr><td><code>ReconnectTime</code></td><td><code>20 s</code></td><td>Delay before retry after listener start failure.</td></tr>
+<tr><td><code>ASDU</code></td><td><code>3</code></td><td>Common ASDU address.</td></tr>
+<tr><td><code>periodicTransmission</code></td><td><code>false</code></td><td>Enables periodic transmission behavior in settings.</td></tr>
+<tr><td><code>periodicPeriod</code></td><td><code>5000 ms</code></td><td>Periodic transmission interval.</td></tr>
+</tbody></table>
+<h2>IEC-104 Interface Mapping</h2>
+<p>The IEC-104 interface maps between the IEC-104 database and the park model every <code>100 ms</code>. It also supports a simulation mode that maps IEC values to simulation variables instead of the real park variables.</p>
+<p>Monitoring points:</p>
+<table><thead><tr><th>IOA</th><th>Type</th><th>Name</th><th>Unit / scale</th></tr></thead><tbody>
+<tr><td><code>1001</code></td><td><code>M_ME_NC</code></td><td>Wind speed</td><td>m/s</td></tr>
+<tr><td><code>1002</code></td><td><code>M_ME_NC</code></td><td>Voltage</td><td>kV</td></tr>
+<tr><td><code>1003</code></td><td><code>M_ME_NC</code></td><td>Active power</td><td>MW</td></tr>
+<tr><td><code>1004</code></td><td><code>M_ME_NC</code></td><td>Reactive power</td><td>MVar</td></tr>
+<tr><td><code>1005</code></td><td><code>M_ME_NC</code></td><td>Current</td><td>A</td></tr>
+<tr><td><code>1006</code></td><td><code>M_ME_NC</code></td><td>Active power setpoint monitor</td><td>100 kW steps</td></tr>
+<tr><td><code>2001</code></td><td><code>M_SP_NA</code></td><td>Park operation / grid connected</td><td>Boolean</td></tr>
+<tr><td><code>2002</code></td><td><code>M_SP_NA</code></td><td>Park MV breaker</td><td>Boolean</td></tr>
+<tr><td><code>2003</code></td><td><code>M_SP_NA</code></td><td>Secondary regulation active</td><td>Boolean</td></tr>
+<tr><td><code>2004</code></td><td><code>M_SP_NA</code></td><td>80 percent emergency limit active</td><td>Boolean</td></tr>
+<tr><td><code>2005</code></td><td><code>M_SP_NA</code></td><td>60 percent emergency limit active</td><td>Boolean</td></tr>
+<tr><td><code>2006</code></td><td><code>M_SP_NA</code></td><td>40 percent emergency limit active</td><td>Boolean</td></tr>
+<tr><td><code>2007</code></td><td><code>M_SP_NA</code></td><td>20 percent emergency limit active</td><td>Boolean</td></tr>
+</tbody></table>
+<p>Control points:</p>
+<table><thead><tr><th>IOA</th><th>Type</th><th>Name</th><th>Behavior</th></tr></thead><tbody>
+<tr><td><code>1</code></td><td><code>C_SC_NA</code></td><td>80 percent emergency limit</td><td>Activates 80 percent park maximum remote setpoint and clears IOA 2-4.</td></tr>
+<tr><td><code>2</code></td><td><code>C_SC_NA</code></td><td>60 percent emergency limit</td><td>Activates 60 percent park maximum remote setpoint and clears IOA 1, 3 and 4.</td></tr>
+<tr><td><code>3</code></td><td><code>C_SC_NA</code></td><td>40 percent emergency limit</td><td>Activates 40 percent park maximum remote setpoint and clears IOA 1, 2 and 4.</td></tr>
+<tr><td><code>4</code></td><td><code>C_SC_NA</code></td><td>20 percent emergency limit</td><td>Activates 20 percent park maximum remote setpoint and clears IOA 1-3.</td></tr>
+<tr><td><code>5</code></td><td><code>C_SC_NA</code></td><td>Park start/stop</td><td><code>true</code> starts the park; <code>false</code> stops/pauses the park.</td></tr>
+<tr><td><code>6</code></td><td><code>C_SC_NA</code></td><td>Secondary regulation</td><td>When active, remote setpoint follows IOA 6201. When inactive, remote setpoint returns to park maximum.</td></tr>
+<tr><td><code>6201</code></td><td><code>C_SE_NA</code></td><td>Active power setpoint</td><td>Stored in 100 kW steps and applied to the park as value multiplied by 100.</td></tr>
+</tbody></table>
+<p>Test object groups also exist in the IEC database:</p>
+<table><thead><tr><th>IOA range</th><th>Type</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>3000-3002</code></td><td><code>M_DP_NA</code></td><td>Test double-point monitoring data.</td></tr>
+<tr><td><code>4000-4002</code></td><td><code>C_DC_NA</code></td><td>Test double-command data.</td></tr>
+</tbody></table>
+<h2><strong>Market Interface</strong></h2>
+<h3><strong>Functionality</strong></h3>
+<p>Market interface is created during application startup when a valid license is present.&lt;br&gt; It is started when <code>Settings.MarketInterface.MarketIfEnable</code> is <code>true</code>.&lt;br&gt; It is stopped when <code>Settings.MarketInterface.MarketIfEnable</code> is <code>false</code> and also during application shutdown.&lt;br&gt; The Tools menu contains a Market Interface dialog (<code>Form_MarketInterface</code>) for editing the settings and starting or stopping the server at runtime, plus a status dialog showing active connections.</p>
+<p>Control includes only active power setpoint. Market interface has active power setpoint <code>Market_ActivePowerSetpoint</code> which is updated from the Modbus register. But in case the market interface is offline/down for more than <code>Settings.MarketInterface.FallbackTimeout</code>, <code>Market_ActivePowerSetpoint</code> will revert to park max power value so that park won't be limited indefinetly when interface is down. Market limit will also be reverted when interface is disabled.</p>
+<h3><strong>Interface Protocol</strong></h3>
+<p>The Market Interface is implemented as a Modbus TCP/UDP server integration based on the <code>TQ_ModbusServerCS</code> .NET Framework 4.8 submodule.</p>
+<p>The Modbus library supports:</p>
+<ul>
+<li>TCP and UDP listeners.</li>
+<li>Functions <code>01</code>, <code>02</code>, <code>03</code>, <code>04</code>, <code>05</code>, <code>06</code>, <code>15</code> and <code>16</code>.</li>
+<li>Coils, discrete inputs, holding registers and input registers.</li>
+<li>Configurable IP address, TCP/UDP ports, maximum active connections, stale</li>
+</ul>
+<p>timeout and response rate limit.</p>
+<ul>
+<li>Register mappings to byte buffers, numeric callbacks, strings or register</li>
+</ul>
+<p>blocks.</p>
+<ul>
+<li>Unique and non-overlapping register blocks.</li>
+</ul>
+<h4><strong>Registers Table</strong></h4>
+<table><thead><tr><th></th><th style="text-align:right">Adr</th><th>&amp;nbsp;&amp;nbsp;&amp;nbsp;Name</th><th style="text-align:center">Reg. Type</th><th style="text-align:center">Access</th><th style="text-align:center">Value&lt;br&gt;type</th><th style="text-align:center">Unit</th><th style="text-align:center">Decimal&lt;br&gt;step</th><th style="text-align:right">Default</th><th style="text-align:right">Min</th><th style="text-align:right">Max</th></tr></thead><tbody>
+<tr><td></td><td style="text-align:right"></td><td></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+<tr><td>1</td><td style="text-align:right">100</td><td>Active Power SP (MW)</td><td style="text-align:center">HR</td><td style="text-align:center">R/W</td><td style="text-align:center">uint16</td><td style="text-align:center">MW</td><td style="text-align:center">0.1</td><td style="text-align:right">1.8</td><td style="text-align:right">0</td><td style="text-align:right">1.8</td></tr>
+<tr><td>2</td><td style="text-align:right">101</td><td>Active Power SP (pct)</td><td style="text-align:center">HR</td><td style="text-align:center">R/W</td><td style="text-align:center">uint16</td><td style="text-align:center">%</td><td style="text-align:center">0.1</td><td style="text-align:right">100</td><td style="text-align:right">0</td><td style="text-align:right">100</td></tr>
+<tr><td></td><td style="text-align:right"></td><td></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+<tr><td>3</td><td style="text-align:right">500</td><td>Park Status</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">binary</td><td style="text-align:center">-</td><td style="text-align:right">0</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
+<tr><td>4</td><td style="text-align:right">501</td><td>Park Active Power</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">int16</td><td style="text-align:center">MW</td><td style="text-align:center">0.1</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td style="text-align:right">-</td></tr>
+<tr><td>5</td><td style="text-align:right">502</td><td>Park Wind Speed</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">m/s</td><td style="text-align:center">0.1</td><td style="text-align:right">-</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
+<tr><td></td><td style="text-align:right"></td><td></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:center"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+<tr><td>6</td><td style="text-align:right">1000</td><td>Turbine #1 Status</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">bitfield</td><td style="text-align:center">-</td><td style="text-align:right">0</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
+<tr><td>7</td><td style="text-align:right">1001</td><td>Turbine #1 Active Power</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">int16</td><td style="text-align:center">kW</td><td style="text-align:center">0</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td style="text-align:right">-</td></tr>
+<tr><td>8</td><td style="text-align:right">1002</td><td>Turbine #1 Wind Speed</td><td style="text-align:center">IR</td><td style="text-align:center">R</td><td style="text-align:center">uint16</td><td style="text-align:center">m/s</td><td style="text-align:center">0.1</td><td style="text-align:right">-</td><td style="text-align:right">0</td><td style="text-align:right">-</td></tr>
+</tbody></table>
+<p>Notes:</p>
+<ul>
+<li>Park status register 500 is a placeholder and is currently not implemented.</li>
+<li>Turbine status register 1000 returns <code>WindTurbine.Status</code> for <code>T01</code>.</li>
+<li>Park active power can be controlled either by register 100 or 101. Writing either one will also automatically adjust the other.</li>
+</ul>
+<p>&lt;u&gt;Turbine status bitfield:&lt;/u&gt;</p>
+<table><thead><tr><th style="text-align:right">Bit</th><th>Meaning</th></tr></thead><tbody>
+<tr><td style="text-align:right">0</td><td>Stopped</td></tr>
+<tr><td style="text-align:right">1</td><td>Grid connected</td></tr>
+<tr><td style="text-align:right">2</td><td>Service mode</td></tr>
+<tr><td style="text-align:right">4</td><td>Error</td></tr>
+<tr><td style="text-align:right">5</td><td>Remote control</td></tr>
+<tr><td style="text-align:right">6</td><td>Low wind</td></tr>
+</tbody></table>
+<h3>Market Interface Logs</h3>
+<p>Interface events will be logged in a dedicated Market Interface log. Every log entry consists timestamp (<code>MM.dd HH:mm:ss</code>) and description. Logs are accessible from a separate form accessed through Market Interface settings form. Log window is refreshed automatically to show logs in realtime.&lt;br&gt; Maximum log size is last 1000 logs, older logs will be overwritten. Realtime logging will be handled in volatile memory (RAM).&lt;br&gt; When unsaved logs exist then every 10 min or when program exits, the logs will be saved in a CSV file in "logs" folder inside program folder. If the logs folder does not exist then it will be created. Filename template is <code>MarketLog_YYMMDD_hhmmss.csv</code>. Filename includes timestamp of first log in file. When program starts, existing logs will be loaded from the latest file. Maximum size of the log file is one month or 1000 logs (same as log in memory). When maximum log or file size is reached a new file will be created.</p>
+<p>These are the events that will be logged:</p>
+<ul>
+<li>Interface manual enable/disable</li>
+<li>Market Interface server started</li>
+<li>Market Interface server stopped</li>
+<li>Market Interface server stopped unexpectedly with error description</li>
+<li>Modbus client connected</li>
+<li>Modbus client disconnected/stale</li>
+<li>Modbus client refused</li>
+<li>Modbus request for power setpoint change (with new setpoint value)</li>
+</ul>
+<h2><strong>Interprocess Interface</strong></h2>
+<p>The application creates or opens a memory-mapped file named <code>WindParkServer_Map</code> with one byte of storage. The <code>ProgramHeartBeat</code> property writes a byte to offset <code>1</code> of this map when set.</p>
+<h2><strong>Known Implementation Notes</strong></h2>
+<ul>
+<li>The application currently creates one turbine (<code>T01</code>) in code.</li>
+<li>The generic <code>WindTurbine</code> abstraction is partially populated. Common</li>
+</ul>
+<p>monitoring, database, alarm and external interface values use generic <code>WindTurbine</code> properties, while Vestas-specific UI and diagnostics still cast to <code>VestasTurbine</code> for Vestas-only values.</p>
+<ul>
+<li>Login credentials are hard-coded in source.</li>
+<li>Some configuration lists are serialized with <code>BinaryFormatter</code>.</li>
+<li>Market Interface status and command registers are placeholders and are not</li>
+</ul>
+<p>yet linked to live turbine or park variables.</p>
+<h2><strong>User Interface</strong></h2>
+<h3><strong>Main window</strong></h3>
+<p>The main window is <code>Form_Main</code> and is titled <code>TK Park Server</code>. It is the primary operator view for monitoring the current park and turbine, opening settings and diagnostic tools, and executing permitted controls. The menu bar and status bar use a light steel blue base color. Status labels are bordered/sunken <code>ToolStripStatusLabel</code> controls so important system states remain visible from all tabs.</p>
+<p>The main window has a top park summary area that shows park active power, park wind speed and park production. The central area is a turbine tab control. The current application creates one turbine tab, <code>T01 - Vestas V80</code>, with these sub-tabs:</p>
+<table><thead><tr><th>Tab</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>Overview</code></td><td>Main turbine operating overview: active power, wind speed, generator speed, state code, operation state, pending operation state, error code, service state, yaw status, remote-control status, turbine availability, generator connection and human-readable state/error/yaw text.</td></tr>
+<tr><td><code>Electrical</code></td><td>Electrical and production values: one-second active power, cos phi, frequency, phase voltages, phase currents, production, active power regulator setpoint, active power setpoint and reactive power setpoint.</td></tr>
+<tr><td><code>Temperatures</code></td><td>Turbine temperature values: hydraulic system, environment, gear, generator, slipring, bearings, hub, nacelle, top controller, busbar, spinner, transformers and cooling water.</td></tr>
+<tr><td><code>Control</code></td><td>Turbine service and control commands. This tab is removed while logged out and added after administrator login. Service controls inside it are disabled until service-level login.</td></tr>
+</tbody></table>
+<p>The main form uses two UI refresh timers:</p>
+<table><thead><tr><th>Timer</th><th style="text-align:right">Interval</th><th>Behavior</th></tr></thead><tbody>
+<tr><td>Fast update</td><td style="text-align:right"><code>300 ms</code></td><td>Refreshes top park active power/wind speed, overview measurements and electrical values.</td></tr>
+<tr><td>Slow update</td><td style="text-align:right"><code>1000 ms</code></td><td>Refreshes production, service/yaw/remote/availability statuses, turbine communication visual state, active setpoint display, temperatures, service setpoint labels, bottom status labels and alarm announcement button state.</td></tr>
+</tbody></table>
+<h3><strong>Menus</strong></h3>
+<p>The main menu contains these top-level menus:</p>
+<table><thead><tr><th>Menu</th><th>Items</th><th>Behavior</th></tr></thead><tbody>
+<tr><td><code>Application</code></td><td><code>Connect turbine</code>, <code>Start TSO link</code>, <code>Preferences...</code>, <code>Close</code></td><td>Connects or disconnects the Vestas serial controller, starts/stops the IEC-104 server, opens application preferences or closes the main form. Disconnecting the turbine and stopping the TSO link ask for confirmation.</td></tr>
+<tr><td><code>Tools</code></td><td><code>Logs</code>, <code>TSO Interface</code>, <code>Developer</code></td><td>Opens diagnostics and data views. <code>Developer</code> is removed from the menu while logged out and is added only for developer login.</td></tr>
+<tr><td><code>Tools &gt; Logs</code></td><td><code>Status logs</code>, <code>Data charts</code>, <code>Production</code></td><td>Opens status/error logs, charted logged data and production data views.</td></tr>
+<tr><td><code>Settings</code></td><td><code>Park</code>, <code>Turbines</code>, <code>TSO Interface</code>, <code>Market Interface</code>, <code>Alarm announcement</code>, <code>Communication</code>, <code>Database</code></td><td>Opens configuration forms for park control, turbine settings, IEC-104 settings, Market Interface settings, alarm dispatch, communication and database logging.</td></tr>
+<tr><td><code>Settings &gt; Communication</code></td><td><code>Vestas COM</code>, <code>Add Interface...</code></td><td>Opens Vestas serial communication settings. <code>Add Interface...</code> exists in the menu but is disabled.</td></tr>
+<tr><td><code>Control</code></td><td><code>Start park</code>, <code>Stop park</code></td><td>Sends park start or stop/pause commands after confirmation. The menu is disabled while logged out and also disabled when the turbine port is disconnected.</td></tr>
+<tr><td><code>Info</code></td><td><code>About</code>, <code>License</code></td><td>Opens application information and license dialogs.</td></tr>
+</tbody></table>
+<p>The <code>Connect turbine</code> menu item is dynamic. It shows <code>Connect turbine</code> while the Vestas port is closed and <code>Disconnect turbine</code> while it is open. The IEC-104 menu item similarly changes between <code>Start TSO link</code> and <code>Stop TSO link</code> based on server status after the status refresh method runs.</p>
+<h3><strong>Login and access behavior</strong></h3>
+<p>The user level label in the main window works as both login indicator and login button. When logged out it shows <code>LOGIN</code>, has a dark gray background and white text. Clicking it opens the login dialog. Clicking it while already logged in logs the user out.</p>
+<table><thead><tr><th>User level</th><th>Label text</th><th>UI behavior</th></tr></thead><tbody>
+<tr><td>Logged out</td><td><code>LOGIN</code></td><td>Control menu disabled, <code>Control</code> turbine tab removed, service group disabled and <code>Developer</code> menu hidden.</td></tr>
+<tr><td>Administrator</td><td><code>ADMINISTRATOR</code></td><td>Adds the turbine <code>Control</code> tab. Enables the <code>Control</code> menu when turbine communication is available.</td></tr>
+<tr><td>Service</td><td><code>SERVICE</code></td><td>Includes administrator behavior and enables the service function group inside the turbine <code>Control</code> tab.</td></tr>
+<tr><td>Developer</td><td><code>DEVELOPER</code></td><td>Includes service behavior and adds <code>Tools &gt; Developer</code>.</td></tr>
+</tbody></table>
+<p>Administrator, service and developer states use a gold login label background with black text. After login, the auto-logout timer is enabled and its interval is loaded from <code>Settings.Application.AutoLogoutTime</code>. Auto logout returns the UI to the logged-out state.</p>
+<h3><strong>Status bar visuals</strong></h3>
+<p>The bottom status bar contains connection, logging, setpoint and external interface indicators.</p>
+<table><thead><tr><th>Label</th><th>Text / color behavior</th></tr></thead><tbody>
+<tr><td><code>StatusLabel_ParkConnection</code></td><td><code>Disconnected</code> with light steel blue background when the Vestas port is closed. <code>Connected</code> with light steel blue background when the port is open and turbine communication is healthy. <code>Comm Error</code> with red background when the port is open but turbine communication status is false. Clicking the label opens <code>Form_CommStats</code> at the lower-left edge of the main form.</td></tr>
+<tr><td><code>StatusLabel_DatabaseStatus</code></td><td><code>Database online</code> when database connections are active, otherwise <code>Database offline</code>. The default text is <code>No data logging</code>.</td></tr>
+<tr><td><code>StatusLabel_SetpointMode</code></td><td>Shows <code>Automatic setpoint</code>, <code>Local setpoint</code>, <code>TSO setpoint</code> or <code>Market setpoint</code> according to <code>Program.myPark.ActivePowerSetpoint_Mode</code>.</td></tr>
+<tr><td><code>StatusLabel_PowerSetpoint</code></td><td>Shows the selected active power setpoint and park maximum power in the form <code>&lt;setpoint&gt; / &lt;max&gt; kW</code>. Automatic mode displays the minimum of local, TSO, market and park maximum setpoints.</td></tr>
+<tr><td><code>StatusLabel_Market</code></td><td><code>Market Ctrl Off</code> with gray background when Market Interface is disabled. <code>Market Ctrl Down</code> with yellow background when enabled but there are no active Modbus clients. <code>Market Ctrl OK</code> with green background and white text when at least one Modbus client is active.</td></tr>
+<tr><td><code>StatusLabel_TSOLink</code></td><td><code>TSO link stopped</code> with gray background when stopped. <code>TSO link start...</code> with yellow background while starting. <code>TSO link error</code> with red background on start error. <code>TSO reconn. in: &lt;seconds&gt; s</code> with yellow background while waiting to retry. <code>TSO link down</code> with yellow background when running with no IEC-104 clients. <code>TSO link OK (&lt;n&gt; clients)</code> with green background and white text when at least one client is connected.</td></tr>
+</tbody></table>
+<p>The <code>T01</code> turbine tab itself is also used as a communication visual. It is colored steel blue when <code>T01.CommunicationStatus</code> is true and red when communication is lost. The <code>No communication</code> label is hidden during healthy communication and visible during communication loss.</p>
+<h3><strong>Forms and dialogs</strong></h3>
+<table><thead><tr><th>Form / dialog</th><th>Opened from</th><th>Purpose and behavior</th></tr></thead><tbody>
+<tr><td><code>Form_Startup</code></td><td>Startup</td><td>Splash/loading form shown during startup.</td></tr>
+<tr><td><code>Form_Main</code></td><td>Startup</td><td>Main monitoring and control window.</td></tr>
+<tr><td><code>Form_Preferences</code></td><td><code>Application &gt; Preferences...</code></td><td>Edits <code>Auto connect park</code>, <code>Auto start IEC-104 server</code> and user auto-logout time. OK saves <code>Settings.Application</code>.</td></tr>
+<tr><td><code>Form_ParkSettings</code></td><td><code>Settings &gt; Park</code></td><td>Edits park active power control settings: setpoint mode, local active power setpoint, TSO setpoint display, Market setpoint display and park maximum power. TSO, market and ramping fields are currently disabled in the dialog. OK updates <code>Program.myPark</code> and persists <code>Settings.Park</code>.</td></tr>
+<tr><td><code>Form_TurbineSettings</code></td><td><code>Settings &gt; Turbines</code></td><td>Edits turbine general settings such as nominal power and active power ramping. It also contains communication interface/turbine selection fields, auto-reset settings access and frequency controller access. Auto-reset is visible for administrator and higher; frequency controller is visible for developer.</td></tr>
+<tr><td><code>Form_TurbineCommunication</code></td><td><code>Settings &gt; Communication &gt; Vestas COM</code></td><td>Edits Vestas serial communication settings: port, baud rate, parity, fast/slow poll intervals, response timeout and communication status timeout. It can open communication statistics.</td></tr>
+<tr><td><code>Form_IEC104Settings</code></td><td><code>Settings &gt; TSO Interface</code></td><td>Edits IEC-104 server settings: maximum clients, listener IP, port, ASDU, reconnect time, periodic transmission period and periodic transmission enable. The period field is enabled only when periodic transmission is checked.</td></tr>
+<tr><td><code>Form_MarketInterface</code></td><td><code>Settings &gt; Market Interface</code></td><td>Edits Market Interface Modbus settings: enable state, fallback timeout, IP address, UDP/TCP ports, UDP/TCP enable flags, maximum active connections, stale connection timeout and response rate limit. OK saves settings, stops any existing server instance, and starts a new one when enabled. The <code>Status</code> button is enabled only when the Modbus server instance exists.</td></tr>
+<tr><td><code>Form_ModbusStatus</code></td><td><code>Form_MarketInterface &gt; Status</code></td><td>Shows active Modbus connections with connection time, transport, address, port and last valid request. Refreshes periodically and shows <code>Market Interface server is not running.</code> when the server object does not exist.</td></tr>
+<tr><td><code>Form_MarketInterfaceLogs</code></td><td><code>Form_MarketInterface &gt; Logs</code></td><td>Shows Market Interface log entries in a resizable standalone window. The window refreshes automatically, supports pause/start of screen updates and keeps the most recent 1000 entries.</td></tr>
+<tr><td><code>Form_TSOInterface</code></td><td><code>Tools &gt; TSO Interface</code></td><td>Displays IEC-104 active clients/channels, live monitoring values and control signal values. Service functions button is visible only for service level or higher and opens the IEC-104 test/service form.</td></tr>
+<tr><td><code>Form_TSOInterfaceInterface_Test</code></td><td><code>Form_TSOInterface &gt; Service functions...</code></td><td>IEC-104 interface testing/service form for simulation and service-level verification.</td></tr>
+<tr><td><code>Form_AlarmAnnouncement</code></td><td><code>Settings &gt; Alarm announcement</code></td><td>Configures alarm email server/port/from/subject, delayed trigger time, recipients, excluded status codes and outbox/sent message buffers. Provides add/remove/activate/deactivate recipient actions, test email, resend, clear and default actions.</td></tr>
+<tr><td><code>Form_AlarmAnnouncementStatusCodes</code> / <code>Dialog_AddExcludedStatus</code></td><td><code>Form_AlarmAnnouncement</code></td><td>Maintains the excluded alarm status code list.</td></tr>
+<tr><td><code>Form_AutoResetErrors</code> / <code>Dialog_AddAutoResetCode</code></td><td><code>Form_TurbineSettings</code></td><td>Maintains the automatic reset error code list and automatic error acknowledge delay.</td></tr>
+<tr><td><code>Form_DatabaseSettings</code></td><td><code>Settings &gt; Database</code></td><td>Edits database folder path and logging sample time. Includes a Browse button for selecting a path.</td></tr>
+<tr><td><code>Form_CommStats</code></td><td>Park connection status label or communication settings</td><td>Shows park/turbine communication counters and statistics.</td></tr>
+<tr><td><code>Form_CommTerminal</code></td><td>Communication tooling</td><td>Shows sent/received communication frames and supports terminal logging controls.</td></tr>
+<tr><td><code>Form_CommErrorLog</code></td><td>Communication tooling</td><td>Shows communication error log entries from <code>VestasRCS</code>.</td></tr>
+<tr><td><code>Form_ErrorLogs</code></td><td><code>Tools &gt; Logs &gt; Status logs</code></td><td>Shows stored status/error log records.</td></tr>
+<tr><td><code>Form_DataCharts</code></td><td><code>Tools &gt; Logs &gt; Data charts</code></td><td>Shows logged data in chart form.</td></tr>
+<tr><td><code>Form_Production</code></td><td><code>Tools &gt; Logs &gt; Production</code></td><td>Shows turbine production information.</td></tr>
+<tr><td><code>Form_VestasParameterTool</code></td><td>Turbine <code>Control</code> tab</td><td>Developer/service tool for reading and changing Vestas turbine parameters.</td></tr>
+<tr><td><code>Form_FrequencyController</code></td><td>Turbine settings / developer tools</td><td>Frequency controller service/development form.</td></tr>
+<tr><td><code>Form_Developer</code></td><td><code>Tools &gt; Developer</code></td><td>Developer/debug form; available only after developer login.</td></tr>
+<tr><td><code>Dialog_License</code></td><td><code>Info &gt; License</code></td><td>Shows hardware ID and license information. If no valid license exists, the license information group is hidden and <code>No License</code> is shown.</td></tr>
+<tr><td><code>Dialog_About</code></td><td><code>Info &gt; About</code></td><td>Shows application information.</td></tr>
+<tr><td><code>Dialog_AddUser</code></td><td>Alarm recipient workflow</td><td>Adds a recipient to the alarm announcement recipient list.</td></tr>
+<tr><td><code>Dialog_VestasPowerControl</code></td><td>Vestas-related control workflow</td><td>Vestas power control dialog retained in the project.</td></tr>
+</tbody></table>
+<h3><strong>Operator confirmations and error handling</strong></h3>
+<p>Potentially disruptive operator actions use confirmation dialogs: disconnecting the turbine, stopping the TSO interface, starting the park and stopping the park.&lt;br&gt; Exceptions raised from menu actions and refresh functions are shown with modal message boxes containing the exception message and the source context.</p>
+</main>
+</body>
+</html>

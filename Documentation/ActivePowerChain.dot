@@ -1,0 +1,128 @@
+digraph ActivePowerChain {
+    // Active power control and monitoring chains in TK Park Server.
+
+    graph [
+        rankdir=TB,
+        compound=true,
+        fontname="Segoe UI",
+        fontsize=10,
+        nodesep=0.45,
+        ranksep=0.55
+    ];
+
+    node [
+        shape=box,
+        style="rounded,filled",
+        fillcolor="#f5f7fa",
+        color="#8fa3b8",
+        fontname="Segoe UI",
+        fontsize=10
+    ];
+
+    edge [
+        color="#4f6478",
+        fontname="Segoe UI",
+        fontsize=9
+    ];
+
+    subgraph cluster_UI {
+        label="Application UI";
+        color="#b8c5d1";
+        style="rounded";
+
+        ParkSettings [label="Park settings dialog"];
+        MainDirectSetpoint [label="Manual service control"];
+    }
+
+    subgraph cluster_TSO {
+        label="TSO interface (IEC-104)";
+        color="#b8c5d1";
+        style="rounded";
+
+        IECCommandDb [label="IEC-104 commands"];
+        IECSetpoint [label=<IOA 6201<BR/>Active power setpoint>];
+        SecondaryReg [label=<IOA 6<BR/>Secondary regulation>];
+        EmergencyLimits [label=<IOA 1-4<BR/>emergency limits>];
+        TSOsetpoint [label=<Select active<BR/>power setpoint>];
+    }
+
+    subgraph cluster_Market {
+        label="Market Interface (Modbus)";
+        color="#b8c5d1";
+        style="rounded";
+
+        ModbusHolding [label=<Holding registers 100/101<BR/>Market active power setpoint>];
+        MarketFallback [label=<Interface disabled/down<BR/>fallback to ActivePowerMax>];
+    }
+
+    subgraph cluster_Park {
+        label="Park active power selection";
+        color="#b8c5d1";
+        style="rounded";
+
+        LocalSP [label="Local_ActivePowerSetpoint"];
+        TSOSP [label="TSO_ActivePowerSetpoint"];
+        MarketSP [label="Market_ActivePowerSetpoint"];
+        MaxPower [label="ActivePowerMax"];
+        Mode [label="ActivePowerSetpoint_Mode", shape=diamond, fillcolor="#eef4fb"];
+        AutoMode [label=<Mode 0<BR/>automatic>];
+        LocalMode [label=<Mode 1<BR/>local setpoint>];
+        TSOMode [label=<Mode 2<BR/>TSO setpoint>];
+        MarketMode [label=<Mode 3<BR/>market setpoint>];
+        Clamp [label=<Clamp selected setpoint<BR/>to ActivePowerMax>];
+        SetActivePower [label="WindPark.SetActivePower()"];
+    }
+
+    subgraph cluster_TurbineObject_T01 {
+        label="Turbine T01";
+        color="#b8c5d1";
+        style="rounded";
+
+        Turbine_T01 [label="WindTurbine.Set_PowerSetpoint()"];
+        VestasTurbine [label="VestasTurbine override"];
+        VestasRCS [label="VestasRCS.Set_ActivePowerSetpoint()"];
+        TurbineController [label="Turbine controller"];
+    }
+
+    Turbine [label="Vestas turbine"];
+
+    ParkSettings -> LocalSP;
+    ParkSettings -> TSOSP;
+    ParkSettings -> MarketSP;
+    ParkSettings -> MaxPower;
+    ParkSettings -> Mode;
+
+    IECCommandDb -> IECSetpoint;
+    IECCommandDb -> SecondaryReg;
+    IECCommandDb -> EmergencyLimits;
+    IECSetpoint -> TSOsetpoint;
+    SecondaryReg -> TSOsetpoint [label=<on: IOA 6201<BR/>off: ActivePowerMax>];
+    EmergencyLimits -> TSOsetpoint [label=<80/60/40/20 %<BR/>of ActivePowerMax>];
+    TSOsetpoint -> TSOSP;
+
+    ModbusHolding -> MarketSP;
+    MarketFallback -> MarketSP;
+
+    MaxPower -> Clamp;
+    MaxPower -> MarketFallback;
+    LocalSP -> Mode;
+    TSOSP -> Mode;
+    MarketSP -> Mode;
+    Mode -> AutoMode;
+    Mode -> LocalMode;
+    Mode -> TSOMode;
+    Mode -> MarketMode;
+    AutoMode -> Clamp;
+    LocalMode -> Clamp;
+    TSOMode -> Clamp;
+    MarketMode -> Clamp;
+    Clamp -> SetActivePower;
+
+    SetActivePower -> Turbine_T01;
+    MainDirectSetpoint -> Turbine_T01;
+    Turbine_T01 -> VestasTurbine;
+    VestasTurbine -> VestasRCS;
+    VestasRCS -> TurbineController;
+
+    TurbineController -> Turbine [label="RCS protocol"];
+}
